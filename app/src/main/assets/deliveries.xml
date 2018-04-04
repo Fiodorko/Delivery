@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<load>
+    <delivery id="1">
+        <recipient>JUKA stavby s.r.o.</recipient>
+        <address>Kysucká 537/3, 010 01 Žilina</address>
+        <date>20.4.2018</date>
+        <phone>0904 398 338</phone>
+    </delivery>
+    <delivery id="2">
+        <recipient>Promos, Ltd.</recipient>
+        <address>Bytčická 16, 010 01 Žilina</address>
+        <date>20.4.2018</date>
+        <phone>02/556 491 25</phone>
+    </delivery>
+    <delivery id="3">
+        <id>3</id>
+        <recipient>SOKI, s.r.o. - stavebná firma</recipient>
+        <address>Majerská 1530/31, 010 01 Žilina</address>
+        <date>20.4.2018</date>
+        <phone>0911 524 103</phone>
+    </delivery>
+    <delivery id="4">
+        <id>4</id>
+        <recipient>I.B.S., spol. s r.o.</recipient>
+        <address>Jozefa Vuruma 3, 010 01 Žilina</address>
+        <date>20.4.2018</date>
+        <phone>041/500 37 84</phone>
+    </delivery>
+    <delivery id="5">
+        <recipient>ERPOS, spol. Ltd.</recipient>
+        <address>Vysokoškolákov 3151/4, 010 08 Žilina</address>
+        <date>20.4.2018</date>
+        <phone>041/500 40 23</phone>
+    </delivery>
+</load>
+
