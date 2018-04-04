@@ -11,7 +11,9 @@
     <org.osmdroid.views.MapView android:id="@+id/map"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="50"/>
+        android:layout_weight="50"
+
+        />
 
     <Button
         android:id="@+id/expandButton"
@@ -24,7 +26,8 @@
         android:id="@+id/deliveryListView"
         android:layout_height="0dp"
         android:layout_width="match_parent"
-        android:layout_weight="45">
+        android:layout_weight="45"
+        android:layout_marginTop="0dp">
     </ListView>
 
 

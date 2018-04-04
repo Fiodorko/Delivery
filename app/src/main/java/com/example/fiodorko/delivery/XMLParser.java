@@ -42,13 +42,10 @@ public class XMLParser {
         Geocoder geocoder;
 
 
-
-
-
-
         while (eventType != XmlPullParser.END_DOCUMENT) {
             String name;
             delivery = new Delivery(recipient, address, date, phone, id);
+
             switch (eventType) {
                 case XmlPullParser.START_DOCUMENT:
                     deliveries = new ArrayList();
@@ -82,9 +79,7 @@ public class XMLParser {
                     break;
                 case XmlPullParser.END_TAG:
                     name = parser.getName();
-
                     if (name.equalsIgnoreCase("delivery") && delivery != null) {
-
                         deliveries.add(delivery);
                     }
             }

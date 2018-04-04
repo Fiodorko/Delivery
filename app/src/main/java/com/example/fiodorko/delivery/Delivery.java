@@ -1,9 +1,13 @@
 package com.example.fiodorko.delivery;
 
+import android.location.Geocoder;
+
+import org.osmdroid.util.GeoPoint;
+
 public class Delivery {
     private String recipient, address, date, phone;
     private int id;
-    private double lat, lon;
+    private GeoPoint location;
 
     public Delivery(String recipient, String address, String date, String phone, int id) {
         this.recipient = recipient;
@@ -19,8 +23,7 @@ public class Delivery {
         this.date = date;
         this.phone = phone;
         this.id = id;
-        this.lat = lat;
-        this.lon = lon;
+
     }
 
     public String getRecipient() {
@@ -63,19 +66,11 @@ public class Delivery {
         this.id = id;
     }
 
-    public double getLat() {
-        return lat;
+    public GeoPoint getLocation() {
+        return location;
     }
 
-    public void setLat(double lat) {
-        this.lat = lat;
-    }
-
-    public double getLon() {
-        return lon;
-    }
-
-    public void setLon(double lon) {
-        this.lon = lon;
+    public void setLocation(GeoPoint location) {
+        this.location = location;
     }
 }
