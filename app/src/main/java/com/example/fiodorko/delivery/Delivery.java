@@ -18,6 +18,7 @@ public class Delivery {
         this.address = address;
         this.date = date;
         this.phone = phone;
+        
         this.id = id;
         this.lat = lat;
         this.lon = lon;
