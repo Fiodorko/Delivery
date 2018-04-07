@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Delivery</string>
+    <string name="button_choose_file">Vyberte súbor s objednávkami</string>
+    <string name="button_path">Nájdi najlepšiu cestu</string>
 </resources>

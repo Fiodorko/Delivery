@@ -9,22 +9,15 @@ public class Delivery {
     private int id;
     private GeoPoint location;
 
-    public Delivery(String recipient, String address, String date, String phone, int id) {
+    public Delivery(String recipient, String address, String date, String phone, int id, GeoPoint location) {
         this.recipient = recipient;
         this.address = address;
         this.date = date;
         this.phone = phone;
         this.id = id;
+        this.location = location;
     }
 
-    public Delivery(String recipient, String address, String date, String phone, int id, double lat, double lon) {
-        this.recipient = recipient;
-        this.address = address;
-        this.date = date;
-        this.phone = phone;
-        this.id = id;
-
-    }
 
     public String getRecipient() {
         return recipient;

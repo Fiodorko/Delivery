@@ -10,8 +10,8 @@ import java.util.List;
 
 public class DeliveryListAdapter extends BaseAdapter{
 
-    Context context;
-    List<Delivery> deliveryList;
+    private Context context;
+    private List<Delivery> deliveryList;
 
     public DeliveryListAdapter(Context mContext, List<Delivery> mDeliveryList) {
         context = mContext;
