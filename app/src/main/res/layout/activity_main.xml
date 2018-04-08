@@ -7,46 +7,64 @@
     android:orientation="vertical"
     android:weightSum="100">
 
-    <org.osmdroid.views.MapView
-        android:id="@+id/map"
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="50"
+        android:orientation="horizontal"
+        >
 
-        />
+        <org.osmdroid.views.MapView
+            android:id="@+id/map"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            />
 
-    <LinearLayout
+        <ProgressBar
+            android:id="@+id/mapProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"
+            />
+
+
+    </RelativeLayout>
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="6"
-        android:orientation="horizontal">
-
-
-
+        android:orientation="horizontal"
+        android:weightSum="100">
 
         <Button
-        android:id="@+id/fileButton"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:text="@string/button_choose_file"/>
+            android:id="@+id/fileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:text="@string/button_choose_file" />
 
         <Button
+            android:visibility="invisible"
             android:id="@+id/pathButton"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:text="@string/button_path"/>
+            android:layout_centerInParent="true"
+            android:onClick="draw"
+            android:text="@string/button_path" />
 
-    </LinearLayout>
+    </RelativeLayout>
 
 
     <ListView
         android:id="@+id/deliveryListView"
+
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="0dp"
-        android:layout_weight="45">
+        android:layout_weight="45"
+        android:footerDividersEnabled="false"
+        android:headerDividersEnabled="false">
 
     </ListView>
 

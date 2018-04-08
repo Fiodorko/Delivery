@@ -13,8 +13,8 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 import android.widget.Toolbar;
 
 import org.osmdroid.api.IMapController;
@@ -52,6 +52,28 @@ public class MainActivity extends Activity {
     ArrayList<Delivery> deliveries = new ArrayList<>();
     ArrayList<GeoPoint> waypoints = new ArrayList<>();
 
+    Thread t = new Thread(new Runnable() {
+        public void run() {
+            bestPath = findBestPath();
+            Message msg = myHandler.obtainMessage(1);
+            myHandler.sendMessage(msg);
+        }
+    });
+
+
+     Handler myHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                try {
+                    drawPath();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
 
     int[] colors = {Color.CYAN, Color.GREEN, Color.RED, Color.YELLOW, Color.BLUE, Color.MAGENTA};
 
@@ -68,6 +90,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        listView = findViewById(R.id.deliveryListView);
+
         initializeMap();
 
 
@@ -77,49 +101,47 @@ public class MainActivity extends Activity {
                         Log.d(TAG, Environment.getExternalStorageDirectory().getAbsolutePath());
                         intent = new Intent(Intent.ACTION_OPEN_DOCUMENT , Uri.parse("/sdcard/Download/deliveries"));
                         intent.setType("text/xml");
-
                         startActivityForResult(intent, 1);
 
             }
         });
 
-        findViewById(R.id.pathButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawPath();
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            public void onItemClick(AdapterView<?> parentAdapter, View view,
+                                    int position, long id) {
+
+                IMapController mapController = map.getController();
+                DeliveryListAdapter adapt = (DeliveryListAdapter) listView.getAdapter();
+                mapController.setCenter(adapt.getItem(position).getLocation());
+                map.invalidate();
             }
         });
-
     }
 
-    private void drawPath()
-    {
+    private void drawPath() throws InterruptedException {
+
+        findViewById(R.id.map).setAlpha((float) 1);
+        findViewById(R.id.mapProgress).setVisibility(View.INVISIBLE);
+
+        listView.setAdapter(new DeliveryListAdapter(this, deliveries));
+
+        for(Polyline path : bestPath)
+        {
+
+            map.getOverlays().add(path);
+            map.invalidate();
+        }
+
         for(Delivery point : deliveries)
         {
             Marker startMarker = new Marker(map);
             startMarker.setPosition(point.getLocation());
+
+
+
             map.getOverlays().add(startMarker);
-        }
-
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-
-                bestPath = findBestPath();
-            }
-        });
-
-        t.start();
-
-        while(t.isAlive())
-            {
-
-        }
-
-        for(Polyline path : bestPath)
-        {
-            map.getOverlays().add(path);
-            map.invalidate();
         }
     }
 
@@ -128,19 +150,37 @@ public class MainActivity extends Activity {
         RoadManager roadManager = new OSRMRoadManager(this);
         ArrayList<Polyline> paths = new ArrayList<>();
 
-        waypoints = pf.greedy();
-        ArrayList<GeoPoint> pair = new ArrayList<>();
-        pair.add(null);
-        pair.add(null);
 
-        for (int i = 0; i < waypoints.size()-1; i++) {
-            pair.set(0, waypoints.get(i));
-            pair.set(1, waypoints.get(i+1));
+        deliveries = pf.greedy();
+        Log.d(TAG,deliveries.size() + " First: " + deliveries.get(0).getAddress());
+        ArrayList<GeoPoint> pair = new ArrayList<>();
+
+        pair.add(0,start);
+        pair.add(1,deliveries.get(0).getLocation());
+
+        Polyline roadOverlay = RoadManager.buildRoadOverlay(roadManager.getRoad(pair));
+        roadOverlay.setColor(colors[0]);
+        paths.add(roadOverlay);
+
+        for (int i = 0; i < deliveries.size(); i++) {
+            Log.d(TAG, deliveries.get(i).getLocation().toDoubleString());
+            pair.set(0, deliveries.get(i).getLocation());
+            if(i != deliveries.size()-1)
+            {
+                pair.set(1, deliveries.get(i+1).getLocation());
+            } else
+                {
+                    pair.set(1, start);
+                }
+
 
             Road road = roadManager.getRoad(pair);
 
-            Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-            roadOverlay.setColor(colors[i%6]);
+            roadOverlay = RoadManager.buildRoadOverlay(road);
+            roadOverlay.setColor(colors[(i+1)%6]);
+            deliveries.get(i).setColor(colors[(i)%6]);
+            deliveries.get(i).setDistance(road.mLength);
+            deliveries.get(i).setDuration(road.mDuration);
             paths.add(roadOverlay);
 
         }
@@ -172,11 +212,11 @@ public class MainActivity extends Activity {
             e.printStackTrace();
         }
 
-        DeliveryListAdapter adapter = new DeliveryListAdapter(this, deliveries);
+
 
         listView = (ListView) findViewById(R.id.deliveryListView);
 
-        listView.setAdapter(adapter);
+        listView.setAdapter(new DeliveryListAdapter(this, deliveries));
 
     }
 
@@ -194,8 +234,26 @@ public class MainActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
+                findViewById(R.id.fileButton).setVisibility(View.GONE);
+
+
+                findViewById(R.id.pathButton).setVisibility(View.VISIBLE);
             }
         }
     }
+
+    public void draw(View v) throws InterruptedException {
+        t.start();
+        findViewById(R.id.map).setAlpha((float) 0.5);
+        findViewById(R.id.mapProgress).setVisibility(View.VISIBLE);
+    }
+
+
+    public void zoom(View v) throws InterruptedException {
+
+
+    }
+
+
 
 }

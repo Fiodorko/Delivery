@@ -11,27 +11,40 @@ import java.util.ArrayList;
 
 public class PathFinder {
     private ArrayList<GeoPoint> waypoints;
+
+    private ArrayList<Delivery> deliveries;
     private GeoPoint start;
     private double distanceMatrix[][];
     private String TAG = "PathFinder";
+    private Context ctx;
 
     public PathFinder(ArrayList<Delivery> deliveries, GeoPoint start, Context ctx) {
-        this.waypoints = new ArrayList<>();
         this.start = start;
-        this.waypoints.add(start);
+        this.deliveries = deliveries;
+        this.ctx = ctx;
+    }
 
+    private void getWaypoints()
+    {
+        waypoints = new ArrayList<>();
+        waypoints.add(start);
         for (Delivery delivery: deliveries)
         {
             waypoints.add(delivery.getLocation());
         }
+        Log.d(TAG,"Size =" + waypoints.size());
+    }
 
-
+    private void buildDistanceMatrix()
+    {
+        getWaypoints();
         distanceMatrix = new double[waypoints.size()][waypoints.size()];
         RoadManager roadManager = new OSRMRoadManager(ctx);
-        ArrayList<GeoPoint> pair = new ArrayList<>(2);
+        ArrayList<GeoPoint> pair = new ArrayList<>();
 
         pair.add(null);
         pair.add(null);
+
 
         for (int i = 0; i < waypoints.size(); i++)
         {
@@ -39,14 +52,16 @@ public class PathFinder {
             {
                 pair.set(0,waypoints.get(i));
                 pair.set(1,waypoints.get(j));
-                distanceMatrix[i][j] = roadManager.getRoad(pair).mLength;
-                if(i == 6 || j == 6)Log.d(TAG, waypoints.get(i).getLatitude() + " " + waypoints.get(j).getLatitude());
 
+                distanceMatrix[i][j] = roadManager.getRoad(pair).mLength;
             }
         }
+        getDistanceMatrix();
     }
 
+
     public double[][] getDistanceMatrix() {
+
         for (int i = 0; i < distanceMatrix.length; i++) {
             for (int j = 0; j < distanceMatrix.length; j++) {
                 Log.d(TAG, " i:" + i + " j: "+ j + " = " + distanceMatrix[i][j]+ " ");
@@ -57,12 +72,14 @@ public class PathFinder {
     }
 
 
-
-
-    public ArrayList<GeoPoint> greedy() {
+    public ArrayList<Delivery> greedy() {
+        buildDistanceMatrix();
+        ArrayList<Delivery> deliveries = new ArrayList<>();
         ArrayList<GeoPoint> bestPath = new ArrayList<>();
         bestPath.add(start);
+
         int actual = waypoints.indexOf(start);
+
         while(bestPath.size() < waypoints.size())
         {
             int next = -1;
@@ -78,11 +95,12 @@ public class PathFinder {
                 }
             }
             bestPath.add(waypoints.get(next));
+            deliveries.add(this.deliveries.get(next-1));
             actual = next;
         }
+
         bestPath.add(start);
 
-
-        return bestPath;
+        return deliveries;
     }
 }
