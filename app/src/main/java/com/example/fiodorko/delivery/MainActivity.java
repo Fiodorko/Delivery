@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -34,10 +33,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
 
 
-
+    private int OPTIONS_REQUEST = 2;
     Intent intent;
     Context ctx;
     Toolbar toolbar;
@@ -54,14 +53,15 @@ public class MainActivity extends Activity {
 
     Thread t = new Thread(new Runnable() {
         public void run() {
-            bestPath = findBestPath();
+            PathFinder pf = new PathFinder(deliveries, start, getBaseContext());
+            deliveries = pf.bestPath();
             Message msg = myHandler.obtainMessage(1);
             myHandler.sendMessage(msg);
         }
     });
 
 
-     Handler myHandler = new Handler() {
+    Handler myHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -75,14 +75,10 @@ public class MainActivity extends Activity {
         }
     };
 
-    int[] colors = {Color.CYAN, Color.GREEN, Color.RED, Color.YELLOW, Color.BLUE, Color.MAGENTA};
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ctx = getApplicationContext();
-
 
 
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -98,26 +94,16 @@ public class MainActivity extends Activity {
         findViewById(R.id.fileButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                        Log.d(TAG, Environment.getExternalStorageDirectory().getAbsolutePath());
-                        intent = new Intent(Intent.ACTION_OPEN_DOCUMENT , Uri.parse("/sdcard/Download/deliveries"));
-                        intent.setType("text/xml");
-                        startActivityForResult(intent, 1);
+
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
+                intent.setType("text/xml");
+                startActivityForResult(intent, 1);
 
             }
         });
 
+        listView.setOnItemClickListener(this);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            public void onItemClick(AdapterView<?> parentAdapter, View view,
-                                    int position, long id) {
-
-                IMapController mapController = map.getController();
-                DeliveryListAdapter adapt = (DeliveryListAdapter) listView.getAdapter();
-                mapController.setCenter(adapt.getItem(position).getLocation());
-                map.invalidate();
-            }
-        });
     }
 
     private void drawPath() throws InterruptedException {
@@ -127,68 +113,18 @@ public class MainActivity extends Activity {
 
         listView.setAdapter(new DeliveryListAdapter(this, deliveries));
 
-        for(Polyline path : bestPath)
-        {
+        Log.d("PathFinder", deliveries.size()+ " zasielok");
 
-            map.getOverlays().add(path);
+        for (Delivery delivery : deliveries) {
+            map.getOverlays().add(delivery.getPath());
             map.invalidate();
         }
 
-        for(Delivery point : deliveries)
-        {
-            Marker startMarker = new Marker(map);
-            startMarker.setPosition(point.getLocation());
 
-
-
-            map.getOverlays().add(startMarker);
-        }
     }
 
-    private ArrayList<Polyline> findBestPath() {
-        PathFinder pf = new PathFinder(deliveries, start, this);
-        RoadManager roadManager = new OSRMRoadManager(this);
-        ArrayList<Polyline> paths = new ArrayList<>();
 
-
-        deliveries = pf.greedy();
-        Log.d(TAG,deliveries.size() + " First: " + deliveries.get(0).getAddress());
-        ArrayList<GeoPoint> pair = new ArrayList<>();
-
-        pair.add(0,start);
-        pair.add(1,deliveries.get(0).getLocation());
-
-        Polyline roadOverlay = RoadManager.buildRoadOverlay(roadManager.getRoad(pair));
-        roadOverlay.setColor(colors[0]);
-        paths.add(roadOverlay);
-
-        for (int i = 0; i < deliveries.size(); i++) {
-            Log.d(TAG, deliveries.get(i).getLocation().toDoubleString());
-            pair.set(0, deliveries.get(i).getLocation());
-            if(i != deliveries.size()-1)
-            {
-                pair.set(1, deliveries.get(i+1).getLocation());
-            } else
-                {
-                    pair.set(1, start);
-                }
-
-
-            Road road = roadManager.getRoad(pair);
-
-            roadOverlay = RoadManager.buildRoadOverlay(road);
-            roadOverlay.setColor(colors[(i+1)%6]);
-            deliveries.get(i).setColor(colors[(i)%6]);
-            deliveries.get(i).setDistance(road.mLength);
-            deliveries.get(i).setDuration(road.mDuration);
-            paths.add(roadOverlay);
-
-        }
-        return paths;
-    }
-
-    public void initializeMap()
-    {
+    public void initializeMap() {
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setBuiltInZoomControls(false);
@@ -199,20 +135,17 @@ public class MainActivity extends Activity {
         map.invalidate();
     }
 
-    public void parseXML(InputStream file){
-        Geocoder geocoder = new Geocoder(this);
+    public void parseXML(InputStream file) throws IOException, XmlPullParserException {
 
-        try {
-            InputStream input = file;
-            XMLParser parser = new XMLParser(input, geocoder);
-            deliveries = parser.parseXML();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (XmlPullParserException e) {
-            e.printStackTrace();
+        InputStream input = file;
+        XMLParser parser = new XMLParser(input, this);
+        deliveries = parser.parseXML();
+
+        for (Delivery point : deliveries) {
+            Marker marker = new Marker(map);
+            point.setMarker(marker);
+            map.getOverlays().add(point.getMarker());
         }
-
-
 
         listView = (ListView) findViewById(R.id.deliveryListView);
 
@@ -230,20 +163,32 @@ public class MainActivity extends Activity {
                 if (data != null) {
                     try {
                         parseXML(getContentResolver().openInputStream(data.getData()));
-                    } catch (FileNotFoundException e) {
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (XmlPullParserException e) {
                         e.printStackTrace();
                     }
+
                 }
                 findViewById(R.id.fileButton).setVisibility(View.GONE);
-
-
                 findViewById(R.id.pathButton).setVisibility(View.VISIBLE);
+            }
+        }
+
+
+        if (requestCode == OPTIONS_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                int id = -1;
+                if (data != null)
+                    id = data.getIntExtra("id", 0);
+                removeDelivery(id);
             }
         }
     }
 
     public void draw(View v) throws InterruptedException {
         t.start();
+
         findViewById(R.id.map).setAlpha((float) 0.5);
         findViewById(R.id.mapProgress).setVisibility(View.VISIBLE);
     }
@@ -255,5 +200,48 @@ public class MainActivity extends Activity {
     }
 
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        long viewId = view.getId();
 
+        DeliveryListAdapter adapt = (DeliveryListAdapter) listView.getAdapter();
+        if (viewId == R.id.detail_button) {
+
+            intent = new Intent(this, DeliveryOptions.class);
+            intent.putExtra("parcel_data", adapt.getItem(position));
+
+            startActivityForResult(intent, OPTIONS_REQUEST);
+        } else {
+            IMapController mapController = map.getController();
+            mapController.setCenter(adapt.getItem(position).getLocation());
+
+            if (map.getOverlays().indexOf(adapt.getItem(position).getPath()) != -1) {
+                map.getOverlays().remove(adapt.getItem(position).getPath());
+                map.getOverlays().add(adapt.getItem(position).getPath());
+            }
+
+
+            map.getOverlays().remove(adapt.getItem(position).getMarker());
+            map.getOverlays().add(adapt.getItem(position).getMarker());
+
+            map.invalidate();
+        }
+
+
+    }
+
+    public void removeDelivery(int id) {
+        Delivery removed = null;
+        for (Delivery delivery : deliveries) {
+            if (delivery.getId() == id) {
+                map.getOverlays().remove(delivery.getMarker());
+                map.getOverlays().remove(delivery.getPath());
+                removed = delivery;
+            }
+        }
+
+        deliveries.remove(removed);
+        listView.setAdapter(new DeliveryListAdapter(this, deliveries));
+
+    }
 }

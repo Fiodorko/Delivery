@@ -1,8 +1,8 @@
 package com.example.fiodorko.delivery;
 
+import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
-import android.util.Log;
 
 import org.osmdroid.util.GeoPoint;
 import org.xmlpull.v1.XmlPullParser;
@@ -16,19 +16,18 @@ import java.util.List;
 
 public class XMLParser {
 
-    InputStream input;
-    XmlPullParserFactory pullParserFactory;
-    XmlPullParser parser;
-    Geocoder geocoder;
+    private XmlPullParser parser;
+    private Geocoder geocoder;
+    private Context ctx;
 
-    public XMLParser(InputStream paInput, Geocoder geocoder) {
-        this.geocoder = geocoder;
-        input = paInput;
+    XMLParser(InputStream paInput, Context ctx) {
+        this.geocoder = new Geocoder(ctx);
+        this.ctx = ctx;
         try {
-            pullParserFactory = XmlPullParserFactory.newInstance();
+            XmlPullParserFactory pullParserFactory = XmlPullParserFactory.newInstance();
             parser = pullParserFactory.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(input, null);
+            parser.setInput(paInput, null);
         } catch (XmlPullParserException e) {
             e.printStackTrace();
         }
@@ -48,7 +47,7 @@ public class XMLParser {
 
         while (eventType != XmlPullParser.END_DOCUMENT) {
             String name;
-            delivery = new Delivery(recipient, address, date, phone, id, location);
+            delivery = new Delivery(recipient, address, date, phone, id, location, ctx);
 
             switch (eventType) {
                 case XmlPullParser.START_DOCUMENT:

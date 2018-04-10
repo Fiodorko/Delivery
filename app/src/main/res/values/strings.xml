@@ -1,5 +1,16 @@
 <resources>
-    <string name="app_name">Delivery</string>
+    <string name="app_name">Delivery\n</string>
     <string name="button_choose_file">Vyberte súbor s objednávkami</string>
     <string name="button_path">Nájdi najlepšiu cestu</string>
+    <string name="random">Lorem ipsum </string>
+    <string name="address">Adresa:\n </string>
+    <string name="phone">Telefónny kontakt:\n</string>
+    <string name="date">Dátum:\n</string>
+    <string name="status">Stav:\n</string>
+    <string name="recipient">Adresát:\n</string>
+    <string name="signNotification">Podpisom potvrdte prevziatie</string>
+    <string name="confirm">Potvrdiť</string>
+    <string name="reset">Opakovať</string>
+
+
 </resources>

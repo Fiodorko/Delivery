@@ -34,5 +34,6 @@ dependencies {
     implementation files('libs/commons-net-3.6.jar')
     implementation files('libs/commons-net-examples-3.6.jar')
     implementation files('libs/graphhopper-0.1.jar')
+    implementation 'com.github.gcacace:signature-pad:1.2.1'
 
 }
