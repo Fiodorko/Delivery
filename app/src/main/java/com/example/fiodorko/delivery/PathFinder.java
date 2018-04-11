@@ -25,6 +25,19 @@ public class PathFinder {
     private final int[] colors = {hex2Rgb("#3478e5"), hex2Rgb("#41f488"), hex2Rgb("#f44141"), hex2Rgb("#8841f4"), hex2Rgb("#f47f41"), hex2Rgb("#d3f441"), hex2Rgb("#4ff441")};
 
 
+    private class Edge
+    {
+        public Edge(int a, int b, double weight)
+        {
+            this.a = a;
+            this.b = b;
+            this.weight = weight;
+        }
+        public int a;
+        public int b;
+        public double weight;
+    }
+
     public PathFinder(ArrayList<Delivery> deliveries, GeoPoint start, Context ctx) {
         this.start = start;
         this.deliveries = deliveries;
@@ -92,6 +105,7 @@ public class PathFinder {
             @Override
             public void onResponseReceive(double[][] data) {
                 Log.d("JSON", "je to tam");
+                if(data == null) Log.d("JSON", "Matica je prazdna");
                 distanceMatrix = data;
             }
         });
@@ -110,9 +124,10 @@ public class PathFinder {
 
         while(distanceMatrix == null)
         {
-
+            Log.d("x","x");
         }
 
+        Log.d("PathFinder", "cyklus sa ukoncil");
         ArrayList<Delivery> deliveries = new ArrayList<>();
         ArrayList<GeoPoint> bestPath = new ArrayList<>();
         bestPath.add(start);
@@ -143,11 +158,55 @@ public class PathFinder {
         return deliveries;
     }
 
-    public ArrayList<Delivery> bestPath()
+
+    public ArrayList<Delivery> greedys() {
+        getWaypoints();
+        getDistanceMatrix();
+
+        while(distanceMatrix == null)
+        {
+            Log.d("x","x");
+        }
+
+        Log.d("PathFinder", "cyklus sa ukoncil");
+        ArrayList<Delivery> deliveries = new ArrayList<>();
+        ArrayList<GeoPoint> bestPath = new ArrayList<>();
+        bestPath.add(start);
+
+        int actual = waypoints.indexOf(start);
+
+        while(bestPath.size() < waypoints.size())
+        {
+            int next = -1;
+            double min = Double.MAX_VALUE;
+            for (int i = 0; i < waypoints.size(); i++) {
+                if(!bestPath.contains(waypoints.get(i)) && actual != i)
+                {
+                    if(distanceMatrix[actual][i] < min)
+                    {
+                        min = distanceMatrix[actual][i];
+                        next = i;
+
+                    }
+                }
+            }
+            bestPath.add(waypoints.get(next));
+            deliveries.add(this.deliveries.get(next-1));
+            Log.d("PathFinder", "zasielka c." + this.deliveries.get(next-1).getId() + " pridana");
+            actual = next;
+        }
+
+        return deliveries;
+    }
+
+
+    public ArrayList<Delivery> bestPath(String algorithm)
     {
         RoadManager roadManager = new OSRMRoadManager(ctx);
 
-        deliveries = greedy();
+        if(algorithm.equals("Greedy")) deliveries = greedy();
+
+
         Log.d(TAG,deliveries.size() + " First: " + deliveries.get(0).getAddress());
         ArrayList<GeoPoint> pair = new ArrayList<>();
 
@@ -188,9 +247,14 @@ public class PathFinder {
 
     public static int hex2Rgb(String colorStr) {
         return  Color.argb(
-                200,
+                192,
                 Integer.valueOf( colorStr.substring( 1, 3 ), 16 ),
                 Integer.valueOf( colorStr.substring( 3, 5 ), 16 ),
                 Integer.valueOf( colorStr.substring( 5, 7 ), 16 ) );
+    }
+
+    public void spanningTree()
+    {
+
     }
 }

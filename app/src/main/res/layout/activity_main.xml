@@ -53,6 +53,15 @@
             android:onClick="draw"
             android:text="@string/button_path" />
 
+        <Spinner
+            android:visibility="invisible"
+            android:id="@+id/algorithmSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@id/pathButton"
+
+            android:spinnerMode="dropdown"/>
+
     </RelativeLayout>
 
 

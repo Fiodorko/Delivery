@@ -1,15 +1,10 @@
 package com.example.fiodorko.delivery;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
-import android.media.Image;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.view.View;
 import android.widget.ImageView;
 
 import org.osmdroid.util.GeoPoint;
@@ -26,7 +21,7 @@ public class Delivery implements Parcelable {
     private Marker marker;
     private ImageView image;
     private Polyline path;
-
+    private boolean first;
 
 
     public Delivery(Parcel in) {
@@ -38,6 +33,7 @@ public class Delivery implements Parcelable {
         color = in.readInt();
         duration = in.readDouble();
         distance = in.readDouble();
+        first = in.readInt() != 0;
     }
 
 
@@ -53,6 +49,7 @@ public class Delivery implements Parcelable {
         this.color = Color.WHITE;
         this.image = new ImageView(ctx);
         this.image.setImageResource(R.drawable.ic_delivery_package_icon);
+        this.first = false;
         image.setColorFilter(getColor(), PorterDuff.Mode.MULTIPLY);
     }
 
@@ -170,7 +167,9 @@ public class Delivery implements Parcelable {
         dest.writeInt(color);
         dest.writeDouble(duration);
         dest.writeDouble(distance);
+        dest.writeInt((first ? 1 : 0));
         dest.writeParcelable(location, flags);
+
     }
 
     public Polyline getPath() {
@@ -179,5 +178,13 @@ public class Delivery implements Parcelable {
 
     public void setPath(Polyline path) {
         this.path = path;
+    }
+
+    public boolean isFirst() {
+        return first;
+    }
+
+    public void setFirst(boolean first) {
+        this.first = first;
     }
 }

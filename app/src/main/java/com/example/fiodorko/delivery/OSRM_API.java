@@ -25,7 +25,7 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... urls) {
         try {
-            Log.d("JSON", "robim");
+            Log.d("JSON", "Preberam informaciu z OSRM API");
             return downloadUrl(urls[0]);
         } catch (IOException e) {
             return "Nie je možné stiahnuť informácie z webu! Chybná URL?";
@@ -34,11 +34,12 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
 
     protected void onPostExecute(String result) {
 
+        Log.d("JSON", "Parsujem data");
         double[][] matrix = null;
 
         try {
             JSONObject jsonResponse = new JSONObject(result);
-
+            Log.d("JSON", jsonResponse.getString("code"));
             JSONArray array = jsonResponse.getJSONArray("durations");
             Log.d("JSON" , array.toString());
             matrix = new double[array.length()][array.length()];
@@ -52,6 +53,9 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
         } catch (JSONException e) {
 
     }
+
+        if(matrix == null) Log.d("JSON", "Matica je prazdna" + matrix.toString());
+        Log.d("JSON", "Matica je plna" + matrix.toString());
         listener.onResponseReceive(matrix);
     }
 
@@ -68,6 +72,7 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
 
             conn.connect();
             int response = conn.getResponseCode();
+            Log.d("JSON", "Odpoved OSRM je" + response);
 
             is = conn.getInputStream();
 

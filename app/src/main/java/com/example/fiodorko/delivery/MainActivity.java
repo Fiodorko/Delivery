@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Geocoder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,7 +15,11 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.Toast;
 import android.widget.Toolbar;
 
 import org.osmdroid.api.IMapController;
@@ -33,7 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener {
 
 
     private int OPTIONS_REQUEST = 2;
@@ -43,6 +49,8 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     private static final String TAG = "MainLog";
     MapView map;
     ListView listView;
+    Spinner spinner;
+    String algorithm;
 
     GeoPoint start = new GeoPoint(49.2093471600, 18.7578305800);
 
@@ -54,7 +62,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     Thread t = new Thread(new Runnable() {
         public void run() {
             PathFinder pf = new PathFinder(deliveries, start, getBaseContext());
-            deliveries = pf.bestPath();
+            deliveries = pf.bestPath(algorithm);
             Message msg = myHandler.obtainMessage(1);
             myHandler.sendMessage(msg);
         }
@@ -88,6 +96,8 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         listView = findViewById(R.id.deliveryListView);
 
+        spinner =  findViewById(R.id.algorithmSelect);
+        spinner.setOnItemSelectedListener(this);
         initializeMap();
 
 
@@ -95,9 +105,17 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
-                intent.setType("text/xml");
-                startActivityForResult(intent, 1);
+                ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+                if (networkInfo != null && networkInfo.isConnected())
+                {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
+                    intent.setType("text/xml");
+                    startActivityForResult(intent, 1);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Skontrolujte Internetové pripojenie", Toast.LENGTH_SHORT).show();
+                }
 
             }
         });
@@ -113,7 +131,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         listView.setAdapter(new DeliveryListAdapter(this, deliveries));
 
-        Log.d("PathFinder", deliveries.size()+ " zasielok");
+        Log.d("PathFinder", deliveries.size() + " zasielok");
 
         for (Delivery delivery : deliveries) {
             map.getOverlays().add(delivery.getPath());
@@ -172,6 +190,12 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 }
                 findViewById(R.id.fileButton).setVisibility(View.GONE);
                 findViewById(R.id.pathButton).setVisibility(View.VISIBLE);
+                findViewById(R.id.algorithmSelect).setVisibility(View.VISIBLE);
+
+                ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                        R.array.algorithms, android.R.layout.simple_spinner_item);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(adapter);
             }
         }
 
@@ -223,7 +247,6 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
             map.getOverlays().remove(adapt.getItem(position).getMarker());
             map.getOverlays().add(adapt.getItem(position).getMarker());
-
             map.invalidate();
         }
 
@@ -242,6 +265,17 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         deliveries.remove(removed);
         listView.setAdapter(new DeliveryListAdapter(this, deliveries));
+        map.invalidate();
 
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        algorithm = parent.getItemAtPosition(position).toString();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        algorithm = getResources().getResourceName(R.string.algorithm);
     }
 }

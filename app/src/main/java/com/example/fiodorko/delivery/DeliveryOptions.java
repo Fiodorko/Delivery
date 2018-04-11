@@ -65,6 +65,14 @@ public class DeliveryOptions extends Activity {
         signButton = findViewById(R.id.sign_button);
 
 
+
+        if(!delivery.isFirst())
+        {
+            cancelButton.setEnabled(false);
+            holdButton.setEnabled(false);
+            signButton.setEnabled(false);
+        }
+
     }
 
     public void sign(View v){

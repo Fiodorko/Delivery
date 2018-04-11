@@ -30,6 +30,9 @@ public class DeliveryListAdapter extends BaseAdapter{
     public DeliveryListAdapter(Context mContext, List<Delivery> mDeliveryList) {
         context = mContext;
         deliveryList = mDeliveryList;
+        for (Delivery delivery: deliveryList) {
+            delivery.setFirst(false);
+        }
     }
 
     private class ViewHolder {
@@ -64,6 +67,9 @@ public class DeliveryListAdapter extends BaseAdapter{
             }
         });
 
+        deliveryList.get(0).setFirst(true);
+
+
         ViewHolder holder = new ViewHolder();
         holder.detailButton = (ImageButton) v.findViewById(R.id.detail_button);
         holder.detailButton.setOnClickListener(new View.OnClickListener() {
@@ -72,6 +78,8 @@ public class DeliveryListAdapter extends BaseAdapter{
                 ((ListView) parent).performItemClick(v, position, 0);
             }
         });
+
+
 
         GeoPoint location = deliveryList.get(position).getLocation();
         ImageView image = (ImageView) v.findViewById(R.id.image);
