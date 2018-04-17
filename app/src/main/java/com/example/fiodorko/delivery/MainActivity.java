@@ -1,10 +1,9 @@
 package com.example.fiodorko.delivery;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -16,32 +15,30 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.routing.OSRMRoadManager;
-import org.osmdroid.bonuspack.routing.Road;
-import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Polyline;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
-public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener{
 
 
+
+    private final int PATHFINDER_CREATED = 10;
+    private PathFinder pathFinder;
     private int OPTIONS_REQUEST = 2;
     Intent intent;
     Context ctx;
@@ -54,32 +51,35 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
     GeoPoint start = new GeoPoint(49.2093471600, 18.7578305800);
 
-    ArrayList<Polyline> bestPath;
-
     ArrayList<Delivery> deliveries = new ArrayList<>();
-    ArrayList<GeoPoint> waypoints = new ArrayList<>();
 
-    Thread t = new Thread(new Runnable() {
+
+    Thread createPathFinder = new Thread(new Runnable() {
         public void run() {
-            PathFinder pf = new PathFinder(deliveries, start, getBaseContext());
-            deliveries = pf.bestPath(algorithm);
-            Message msg = myHandler.obtainMessage(1);
+            if(pathFinder == null)pathFinder = new PathFinder(deliveries, start, getBaseContext(),myHandler);
+        }
+    });
+
+    Thread getBestPath = new Thread(new Runnable() {
+        public void run() {
+            deliveries = pathFinder.bestPath(algorithm);
+            Message msg = myHandler.obtainMessage(10);
             myHandler.sendMessage(msg);
         }
     });
 
 
+    @SuppressLint("HandlerLeak")
     Handler myHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 1) {
-                try {
-                    drawPath();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            if (msg.what == PATHFINDER_CREATED) {
+                drawPath();
+            }if (msg.what == 5) {
+                getBestPath.start();
             }
+
         }
     };
 
@@ -98,33 +98,13 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         spinner =  findViewById(R.id.algorithmSelect);
         spinner.setOnItemSelectedListener(this);
+
         initializeMap();
 
-
-        findViewById(R.id.fileButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-
-                if (networkInfo != null && networkInfo.isConnected())
-                {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
-                    intent.setType("text/xml");
-                    startActivityForResult(intent, 1);
-                } else {
-                    Toast.makeText(getApplicationContext(), "Skontrolujte Internetové pripojenie", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-        });
-
         listView.setOnItemClickListener(this);
-
     }
 
-    private void drawPath() throws InterruptedException {
+    private void drawPath(){
 
         findViewById(R.id.map).setAlpha((float) 1);
         findViewById(R.id.mapProgress).setVisibility(View.INVISIBLE);
@@ -137,13 +117,10 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             map.getOverlays().add(delivery.getPath());
             map.invalidate();
         }
-
-
     }
 
-
     public void initializeMap() {
-        map = (MapView) findViewById(R.id.map);
+        map = findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setBuiltInZoomControls(false);
         map.setMultiTouchControls(true);
@@ -154,9 +131,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     }
 
     public void parseXML(InputStream file) throws IOException, XmlPullParserException {
-
-        InputStream input = file;
-        XMLParser parser = new XMLParser(input, this);
+        XMLParser parser = new XMLParser(file, this);
         deliveries = parser.parseXML();
 
         for (Delivery point : deliveries) {
@@ -165,29 +140,25 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             map.getOverlays().add(point.getMarker());
         }
 
-        listView = (ListView) findViewById(R.id.deliveryListView);
+        listView = findViewById(R.id.deliveryListView);
 
         listView.setAdapter(new DeliveryListAdapter(this, deliveries));
 
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 1) {
 
             if (resultCode == RESULT_OK) {
-                Uri uri = null;
                 if (data != null) {
                     try {
-                        parseXML(getContentResolver().openInputStream(data.getData()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (XmlPullParserException e) {
+                        parseXML(getContentResolver().openInputStream(Objects.requireNonNull(data.getData())));
+                    } catch (IOException | XmlPullParserException e) {
                         e.printStackTrace();
                     }
-
                 }
+
                 findViewById(R.id.fileButton).setVisibility(View.GONE);
                 findViewById(R.id.pathButton).setVisibility(View.VISIBLE);
                 findViewById(R.id.algorithmSelect).setVisibility(View.VISIBLE);
@@ -210,17 +181,10 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         }
     }
 
-    public void draw(View v) throws InterruptedException {
-        t.start();
-
+    public void draw(View v) {
+        createPathFinder.start();
         findViewById(R.id.map).setAlpha((float) 0.5);
         findViewById(R.id.mapProgress).setVisibility(View.VISIBLE);
-    }
-
-
-    public void zoom(View v) throws InterruptedException {
-
-
     }
 
 
@@ -278,4 +242,22 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     public void onNothingSelected(AdapterView<?> parent) {
         algorithm = getResources().getResourceName(R.string.algorithm);
     }
+
+    public void chooseFile(View v)
+    {
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert connMgr != null;
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        if (networkInfo != null && networkInfo.isConnected())
+        {
+            @SuppressLint("SdCardPath") Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
+            intent.setType("text/xml");
+            startActivityForResult(intent, 1);
+        } else {
+            Toast.makeText(getApplicationContext(), "Skontrolujte Internetové pripojenie", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 }

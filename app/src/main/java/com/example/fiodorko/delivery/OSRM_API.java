@@ -35,11 +35,11 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
     protected void onPostExecute(String result) {
 
         Log.d("JSON", "Parsujem data");
+        Log.d("JSON", result);
         double[][] matrix = null;
 
         try {
             JSONObject jsonResponse = new JSONObject(result);
-            Log.d("JSON", jsonResponse.getString("code"));
             JSONArray array = jsonResponse.getJSONArray("durations");
             Log.d("JSON" , array.toString());
             matrix = new double[array.length()][array.length()];
@@ -51,12 +51,12 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
                 }
             }
         } catch (JSONException e) {
+            throw new RuntimeException(e);
 
-    }
+        }
 
-        if(matrix == null) Log.d("JSON", "Matica je prazdna" + matrix.toString());
-        Log.d("JSON", "Matica je plna" + matrix.toString());
         listener.onResponseReceive(matrix);
+
     }
 
     private String downloadUrl(String points) throws IOException {
@@ -105,4 +105,5 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
         }
         return sb.toString();
     }
+
 }

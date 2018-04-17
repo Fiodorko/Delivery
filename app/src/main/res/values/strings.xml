@@ -14,7 +14,7 @@
     <string name="algorithm">Algoritmus</string>
     <string-array name="algorithms">
         <item>Greedy</item>
-        <item></item>
+        <item>Double Spanning Tree</item>
     </string-array>
 
 
