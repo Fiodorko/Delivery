@@ -9,21 +9,33 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 public class DeliveryOptions extends Activity {
 
-    private int SIGN_REQUEST = 1;
+    public static String date;
+
+    private final int SCAN_REQUEST = 0;
+    private final int SIGN_REQUEST = 1;
+    private final int CANCEL_REQUEST = 2;
+    private final int DELAY_REQUEST = 3;
 
     private String TAG = "Options";
 
     private ImageButton cancelButton;
     private ImageButton holdButton;
     private ImageButton signButton;
-    Delivery delivery;
+
+    private ListView listView;
+    public Delivery delivery;
+    private boolean scann_completed = false;
+
+    Intent resultIntent = new Intent();
+
+    private static final int REQUEST_CODE_QR_SCAN = 101;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -64,14 +76,19 @@ public class DeliveryOptions extends Activity {
         holdButton = findViewById(R.id.hold_button);
         signButton = findViewById(R.id.sign_button);
 
-
+        listView = findViewById(R.id.itemListView);
+        listView.setAdapter(new ItemListAdapter(this, delivery.getContent()));
 
         if(!delivery.isFirst())
         {
             cancelButton.setEnabled(false);
             holdButton.setEnabled(false);
-            signButton.setEnabled(false);
         }
+
+        signButton.setEnabled(scann_completed);
+
+        ImageButton scanButton = findViewById(R.id.scan_button);
+
 
     }
 
@@ -81,29 +98,89 @@ public class DeliveryOptions extends Activity {
         startActivityForResult(intent, SIGN_REQUEST);
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SIGN_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                Uri uri = null;
-                if (data != null) {
-                    signButton.setImageResource(R.drawable.ic_completed_icon);
-                    signButton.setOnClickListener(new View.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(View v) {
-                            Intent resultIntent = new Intent();
-                            resultIntent.putExtra("id", delivery.getId());
-                            setResult(Activity.RESULT_OK, resultIntent);
-                            finish();
-                        }
-                    });
+    public void delay(View v)
+    {
+        DateDialog d = new DateDialog(this, this, delivery);
+        d.show(getFragmentManager(), "timePicker");
+        Log.d("Date", d.getDate());
+    }
 
-                    cancelButton.setEnabled(false);
-                    holdButton.setEnabled(false);
+    public void cancel(View v)
+    {
+        CancelDialog d = new CancelDialog(this, delivery);
+        d.show();
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode)
+        {
+            case SIGN_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = null;
+                    if (data != null) {
+                        delivery.setStatus("Doručená");
+                        signButton.setImageResource(R.drawable.ic_completed_icon);
+                        signButton.setOnClickListener(new View.OnClickListener()
+                        {
+                            @Override
+                            public void onClick(View v) {
+                                Intent resultIntent = new Intent();
+                                resultIntent.putExtra("id", delivery.getId());
+                                resultIntent.putExtra("delivery", delivery);
+                                setResult(Activity.RESULT_OK, resultIntent);
+                                finish();
+                            }
+                        });
+
+                        cancelButton.setEnabled(false);
+                        holdButton.setEnabled(false);
+                    }
                 }
-            }
+                break;
+
+                case SCAN_REQUEST:
+                    if (resultCode == RESULT_OK) {
+                       // String contents = data.getStringExtra("data");
+                        boolean completed = true;
+                        for(Item item : delivery.getContent())
+                        {
+                            if(item.getId().equals(data.getStringExtra("data"))) item.setCompleted(true);
+                            if(!item.isCompleted()) completed = false;
+                        }
+
+                        if(completed)
+                        {
+                            scann_completed = true;
+                            signButton.setEnabled(true);
+                        }
+
+
+                        resultIntent.putExtra("id", delivery.getId());
+                        resultIntent.putExtra("delivery", delivery);
+                        setResult(Activity.RESULT_CANCELED, resultIntent);
+                        listView.setAdapter(new ItemListAdapter(this, delivery.getContent()));
+                    }
+                    if(resultCode == RESULT_CANCELED){
+                        //handle cancel
+                    }
+                    break;
+
+        }
+
+    }
+
+    public void scan(View v)
+    {
+        try {
+            Intent intent = new Intent(this, Scanner.class);
+            startActivityForResult(intent, SCAN_REQUEST);
+        } catch (Exception e) {
+
         }
     }
+
+
+
 
 
 

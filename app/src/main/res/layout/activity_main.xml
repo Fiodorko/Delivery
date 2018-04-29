@@ -30,40 +30,79 @@
 
 
     </RelativeLayout>
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="6"
         android:orientation="horizontal"
-        android:weightSum="100">
+        android:weightSum="3">
+
+        <Spinner
+            android:id="@+id/menu"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:spinnerMode="dropdown"/>
 
         <Button
             android:id="@+id/fileButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_centerInParent="true"
             android:onClick="chooseFile"
             android:text="@string/button_choose_file" />
 
         <Button
             android:visibility="invisible"
             android:id="@+id/pathButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_centerInParent="true"
+            android:layout_weight="1"
             android:onClick="draw"
             android:text="@string/button_path" />
 
         <Spinner
             android:visibility="invisible"
             android:id="@+id/algorithmSelect"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_toRightOf="@id/pathButton"
+            android:layout_weight="1"
 
             android:spinnerMode="dropdown"/>
 
-    </RelativeLayout>
+        <LinearLayout
+            android:id="@+id/route_info"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:visibility="invisible"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/selectedAlgorithm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:layout_gravity="start" />
+
+            <TextView
+                android:id="@+id/total_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:layout_gravity="start"/>
+
+            <TextView
+                android:id="@+id/total_distance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:layout_gravity="start"/>
+
+        </LinearLayout>
+
+
+    </LinearLayout>
 
 
     <ListView

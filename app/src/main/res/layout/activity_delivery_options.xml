@@ -11,32 +11,42 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="100dp"
-        android:layout_weight="50"
+        android:layout_weight="40"
         android:orientation="horizontal">
 
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
             android:layout_marginEnd="10dp"
+            android:layout_marginStart="50dp"
             android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="50dp"/>
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                />
+
+            <ImageButton
+
+                android:id="@+id/scan_button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="50dp"
+                android:onClick="scan"
+                android:src="@drawable/ic_qr_code_scan" />
+
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="25dp"
             android:layout_marginEnd="50dp"
+            android:layout_marginStart="25dp"
             android:orientation="vertical">
 
             <TextView
@@ -88,35 +98,33 @@
         </LinearLayout>
 
 
-
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:weightSum="3"
-        android:layout_weight="10">
+        android:layout_weight="10"
+        android:weightSum="3">
 
         <ImageButton
             android:id="@+id/sign_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:src="@drawable/ic_signature_icon"
-            android:onClick="sign"/>
+            android:onClick="sign"
+            android:src="@drawable/ic_signature_icon" />
 
 
         <ImageButton
             android:id="@+id/hold_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-
             android:layout_margin="10dp"
+            android:onClick="delay"
+            android:layout_weight="1"
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:src="@drawable/ic_hold_icon" />
@@ -125,13 +133,30 @@
             android:id="@+id/cancel_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-
             android:layout_margin="10dp"
+            android:onClick="cancel"
+            android:layout_weight="1"
             android:focusable="false"
             android:focusableInTouchMode="false"
 
             android:src="@drawable/ic_cancel_icon" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="40">
+
+        <ListView
+            android:id="@+id/itemListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:footerDividersEnabled="false"
+            android:headerDividersEnabled="false">
+
+        </ListView>
+
 
     </LinearLayout>
 

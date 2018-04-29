@@ -12,9 +12,29 @@
     <string name="confirm">Potvrdiť</string>
     <string name="reset">Opakovať</string>
     <string name="algorithm">Algoritmus</string>
+    <string name="cancel">Zrušiť</string>
+    <string name="totalDuration">Celkový čas: </string>
+    <string name="totalDistance">Celková vzdialenosť: </string>
+    <string name="units">Km</string>
     <string-array name="algorithms">
         <item>Greedy</item>
         <item>Double Spanning Tree</item>
+        <item>Insertion Heuristic</item>
+        <item>Permutations</item>
+    </string-array>
+
+    <string-array name="menu">
+        <item>Menu</item>
+        <item>Export</item>
+        <item>Zmeniť mapu</item>
+        <item>Uložiť zoznam</item>
+        <item>Reset</item>
+    </string-array>
+
+    <string-array name="reasons">
+        <item>Dôvod</item>
+        <item>Odmietnutie zákazníkom</item>
+        <item>Poškodenie zásielky</item>
     </string-array>
 
 

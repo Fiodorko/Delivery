@@ -20,7 +20,6 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
@@ -30,10 +29,12 @@ dependencies {
     implementation 'org.osmdroid:osmdroid-third-party:6.0.1'
     implementation 'com.github.MKergall:osmbonuspack:6.5.1'
     implementation 'com.squareup.okhttp:okhttp:2.7.0'
+    implementation 'com.github.gcacace:signature-pad:1.2.1'
+    implementation 'me.dm7.barcodescanner:zxing:1.9'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     implementation files('libs/commons-net-3.6-sources.jar')
     implementation files('libs/commons-net-3.6.jar')
     implementation files('libs/commons-net-examples-3.6.jar')
     implementation files('libs/graphhopper-0.1.jar')
-    implementation 'com.github.gcacace:signature-pad:1.2.1'
-
+    implementation 'com.github.blikoon:QRCodeScanner:0.1.2'
 }

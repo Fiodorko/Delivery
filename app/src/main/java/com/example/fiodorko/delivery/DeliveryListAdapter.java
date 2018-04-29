@@ -1,5 +1,6 @@
 package com.example.fiodorko.delivery;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -19,9 +20,10 @@ import org.osmdroid.util.GeoPoint;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
-public class DeliveryListAdapter extends BaseAdapter{
+public class DeliveryListAdapter extends BaseAdapter {
 
 
     private Context context;
@@ -30,7 +32,7 @@ public class DeliveryListAdapter extends BaseAdapter{
     public DeliveryListAdapter(Context mContext, List<Delivery> mDeliveryList) {
         context = mContext;
         deliveryList = mDeliveryList;
-        for (Delivery delivery: deliveryList) {
+        for (Delivery delivery : deliveryList) {
             delivery.setFirst(false);
         }
     }
@@ -45,20 +47,23 @@ public class DeliveryListAdapter extends BaseAdapter{
     }
 
     @Override
-    public Delivery getItem(int position)
-    {
+    public Delivery getItem(int position) {
         return deliveryList.get(position);
     }
 
     @Override
-    public long getItemId(int position)
-    {
+    public long getItemId(int position) {
         return position;
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public View getView(final int position, View convertView, final ViewGroup parent) {
         View v = View.inflate(context, R.layout.delivery_detail_row, null);
+
+        deliveryList.get(0).setFirst(true);
+
+        Delivery actual = deliveryList.get(position);
 
         v.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,8 +72,7 @@ public class DeliveryListAdapter extends BaseAdapter{
             }
         });
 
-        deliveryList.get(0).setFirst(true);
-
+        if (actual.getId() == -1) v.findViewById(R.id.detail_button).setVisibility(View.INVISIBLE);
 
         ViewHolder holder = new ViewHolder();
         holder.detailButton = (ImageButton) v.findViewById(R.id.detail_button);
@@ -80,27 +84,43 @@ public class DeliveryListAdapter extends BaseAdapter{
         });
 
 
-
-        GeoPoint location = deliveryList.get(position).getLocation();
+        GeoPoint location = actual.getLocation();
         ImageView image = (ImageView) v.findViewById(R.id.image);
-        TextView address = (TextView)v.findViewById(R.id.address);
-        TextView duration = (TextView)v.findViewById(R.id.duration);
-        TextView distance = (TextView)v.findViewById(R.id.distance);
+        TextView address = (TextView) v.findViewById(R.id.address);
+        TextView duration = (TextView) v.findViewById(R.id.duration);
+        TextView distance = (TextView) v.findViewById(R.id.distance);
 
 
-        SimpleDateFormat date = new SimpleDateFormat("HH.mm.ss.SSS");
+        SimpleDateFormat date = new SimpleDateFormat("hh.mm.ss", Locale.ENGLISH);
         date.setTimeZone(TimeZone.getDefault());
 
 
-        image.setImageResource(R.drawable.ic_delivery_package);
-        image.setColorFilter( deliveryList.get(position).getColor(), PorterDuff.Mode.SRC_ATOP );
-        address.setText("Adresa: " + deliveryList.get(position).getAddress());
-        duration.setText("Odhadovaný čas " + date.format((long)deliveryList.get(position).getDuration()*1000 ));
-        distance.setText("Vzdialenosť: " + deliveryList.get(position).getDistance() + "Km");
+        if (actual.getId() == -1) {
+            image.setImageResource(R.drawable.ic_storage);
+            image.setColorFilter(actual.getColor(), PorterDuff.Mode.SRC_ATOP);
+        } else {
+            image.setImageResource(R.drawable.ic_delivery_package);
+            image.setColorFilter(actual.getColor(), PorterDuff.Mode.SRC_ATOP);
+            address.setText(context.getString(R.string.address) + actual.getAddress());
+        }
 
+        if (actual.getRoad() != null) {
+            double time = actual.getRoad().mDuration;
+            int hours = (int)time/3600;
+            time -= hours*3600;
+            int minutes = (int)time/60;
+            time -= minutes*60;
+
+            duration.setText(
+                    context.getString(R.string.totalDuration) + " "
+                            + String.format("%02d", hours) + ":"
+                            + String.format("%02d", minutes) + ":"
+                            + String.format("%02.2f", time) + "");
+
+            distance.setText(context.getString(R.string.totalDistance) + " " + String.format("%.2f",deliveryList.get(position).getRoad().mLength) + "km");
+        }
 
         v.setTag(deliveryList.get(position).getId());
-
 
         return v;
     }

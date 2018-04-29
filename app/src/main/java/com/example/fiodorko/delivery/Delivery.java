@@ -7,11 +7,18 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.widget.ImageView;
 
+import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
+import java.util.ArrayList;
+
+import examples.Main;
+
 public class Delivery implements Parcelable {
+    private ArrayList<Item> content;
     private String recipient, address, date, phone;
     private int id;
     private GeoPoint location;
@@ -22,6 +29,9 @@ public class Delivery implements Parcelable {
     private ImageView image;
     private Polyline path;
     private boolean first;
+    private String status;
+
+    private ArrayList<Road> road;
 
 
     public Delivery(Parcel in) {
@@ -34,10 +44,51 @@ public class Delivery implements Parcelable {
         duration = in.readDouble();
         distance = in.readDouble();
         first = in.readInt() != 0;
+        content = in.createTypedArrayList(Item.CREATOR);
+        status = in.readString();
     }
 
 
-    public Delivery(String recipient, String address, String date, String phone, int id, GeoPoint location, Context ctx) {
+    public Delivery(Delivery d , Context ctx, MapView map) {
+        this.content = d.content;
+        this.recipient = d.recipient;
+        this.address = d.address;
+        this.date = d.date;
+        this.phone = d.phone;
+        this.id = d.id;
+        this.location = d.location;
+        this.color = d.color;
+        this.duration = d.duration;
+        this.distance = d.distance;
+        this.image = new ImageView(ctx);
+        this.image.setImageResource(R.drawable.ic_delivery_package_icon);
+        this.marker = new Marker(map);
+        this.marker.setPosition(location);
+        this.marker.setIcon(image.getDrawable());
+        this.path = d.path;
+        this.first = d.first;
+        this.status = d.status;
+        this.road = new ArrayList<>();
+    }
+
+    public Delivery(GeoPoint start, Context ctx, Road road, int color) {
+        this.content = null;
+        this.recipient = null;
+        this.address = null;
+        this.date = null;
+        this.phone = null;
+        this.id = -1;
+        this.location = start;
+        this.color = color;
+        this.marker = null;
+        this.path = null;
+        this.first = false;
+        this.status = null;
+        this.road = new ArrayList<>();
+        this.road.add(road);
+    }
+
+    public Delivery(String recipient, String address, String date, String phone, int id, GeoPoint location, ArrayList<Item> content, Context ctx) {
         this.recipient = recipient;
         this.address = address;
         this.date = date;
@@ -50,7 +101,11 @@ public class Delivery implements Parcelable {
         this.image = new ImageView(ctx);
         this.image.setImageResource(R.drawable.ic_delivery_package_icon);
         this.first = false;
+        this.content = content;
+        this.road = new ArrayList<>();
+        this.status = "Nedokončená";
         image.setColorFilter(getColor(), PorterDuff.Mode.MULTIPLY);
+
     }
 
     public static final Creator<Delivery> CREATOR = new Creator<Delivery>() {
@@ -87,7 +142,10 @@ public class Delivery implements Parcelable {
 
     public void setColor(int color) {
         this.color = color;
+        this.image.setColorFilter(color, PorterDuff.Mode.MULTIPLY);
     }
+
+
 
     public Marker getMarker() {
         return marker;
@@ -100,8 +158,8 @@ public class Delivery implements Parcelable {
         this.image.setColorFilter(getColor(), PorterDuff.Mode.MULTIPLY);
     }
 
-    public void setMarker() {
-        this.image.setColorFilter(getColor(), PorterDuff.Mode.MULTIPLY);
+    public void setMarker(int color) {
+        this.image.setColorFilter(color, PorterDuff.Mode.MULTIPLY);
     }
 
     public String getRecipient() {
@@ -168,13 +226,13 @@ public class Delivery implements Parcelable {
         dest.writeDouble(duration);
         dest.writeDouble(distance);
         dest.writeInt((first ? 1 : 0));
+        dest.writeTypedList(content);
+        dest.writeString(status);
         dest.writeParcelable(location, flags);
 
     }
 
-    public Polyline getPath() {
-        return path;
-    }
+    public Polyline getPath() { return path; }
 
     public void setPath(Polyline path) {
         this.path = path;
@@ -186,5 +244,31 @@ public class Delivery implements Parcelable {
 
     public void setFirst(boolean first) {
         this.first = first;
+    }
+
+    public ArrayList<Item> getContent() {
+        return content;
+    }
+
+    public void setContent(ArrayList<Item> content) {
+        this.content = content;
+    }
+
+    public Road getRoad() {
+        if(road.isEmpty()) return null;
+        return road.get(0);
+    }
+
+    public void setRoad(Road road) {
+        this.road = new ArrayList<>();
+        this.road.add(road);
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.fiodorko.delivery;
+package com.example.fiodorko.delivery.Graph_package;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -28,11 +28,16 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
             Log.d("JSON", "Preberam informaciu z OSRM API");
             return downloadUrl(urls[0]);
         } catch (IOException e) {
-            return "Nie je možné stiahnuť informácie z webu! Chybná URL?";
+            return "Nie je možné stiahnuť informácie z webu!";
         }
     }
 
     protected void onPostExecute(String result) {
+
+        if(result.equals("Nie je možné stiahnuť informácie z webu!")) {
+            listener.onResponseReceive(new double[0][0]);
+            return;
+        }
 
         Log.d("JSON", "Parsujem data");
         Log.d("JSON", result);
@@ -61,6 +66,8 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
 
     private String downloadUrl(String points) throws IOException {
         InputStream is = null;
+
+        if(points.equals("Nie je možné stiahnuť informácie z webu! Chybná URL")) return points;
 
         try {
             URL url = new URL("http://router.project-osrm.org/table/v1/driving/" + points);
