@@ -9,12 +9,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 
 import java.util.Calendar;
 
+/**
+ * Dialóg na zadanie nového dátumu doručenia objednávky
+ */
 @SuppressLint("ValidFragment")
 public class DateDialog extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
@@ -38,7 +40,7 @@ public class DateDialog extends DialogFragment implements DatePickerDialog.OnDat
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
 
-        return new DatePickerDialog(    getActivity(), this, year, month, day);
+        return new DatePickerDialog(getActivity(), this, year, month, day);
     }
 
 
@@ -52,8 +54,7 @@ public class DateDialog extends DialogFragment implements DatePickerDialog.OnDat
         activity.finish();
     }
 
-    public String getDate()
-    {
+    public String getDate() {
         return "" + day + "." + month + "." + year;
     }
 }

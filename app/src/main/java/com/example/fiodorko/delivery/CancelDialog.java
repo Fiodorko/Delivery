@@ -12,8 +12,11 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+/**
+ * Dialóg na zadanie dôvodu zruešenia objednávky
+ */
 public class CancelDialog extends Dialog implements
-        android.view.View.OnClickListener, AdapterView.OnItemSelectedListener{
+        android.view.View.OnClickListener, AdapterView.OnItemSelectedListener {
 
     public Activity activity;
     public Button confirm, cancel;
@@ -50,18 +53,16 @@ public class CancelDialog extends Dialog implements
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.confirm_cancel:
-                if(reason.equals("Dôvod"))
-                {
+                if (reason.equals("Dôvod")) {
                     Toast.makeText(this.getContext(), "Zadajte dôvod zrušenia", Toast.LENGTH_SHORT).show();
-                } else
-                    {
-                        Intent resultIntent = new Intent();
-                        delivery.setStatus("Zrušená z dôvodu:" + reason);
-                        resultIntent.putExtra("id", delivery.getId());
-                        resultIntent.putExtra("delivery", delivery);
-                        activity.setResult(Activity.RESULT_OK, resultIntent);
-                        activity.finish();
-                    }
+                } else {
+                    Intent resultIntent = new Intent();
+                    delivery.setStatus("Zrušená z dôvodu:" + reason);
+                    resultIntent.putExtra("id", delivery.getId());
+                    resultIntent.putExtra("delivery", delivery);
+                    activity.setResult(Activity.RESULT_OK, resultIntent);
+                    activity.finish();
+                }
                 break;
             case R.id.cancel_cancel:
                 dismiss();

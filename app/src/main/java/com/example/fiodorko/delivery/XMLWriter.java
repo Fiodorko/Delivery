@@ -1,6 +1,6 @@
 package com.example.fiodorko.delivery;
 
-import android.os.Message;
+import android.annotation.SuppressLint;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlSerializer;
@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Zapisuje report do XML súboru
+ */
 public class XMLWriter {
 
-    public static String writeXml(ArrayList<Delivery> deliveries){
+    public static String writeXml(ArrayList<Delivery> deliveries) {
         XmlSerializer serializer = Xml.newSerializer();
         StringWriter writer = new StringWriter();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-mm-yyyy");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("dd-mm-yyyy");
 
         try {
 
@@ -27,7 +30,7 @@ public class XMLWriter {
             serializer.attribute("", "id", formatter.format(Date.parse(Calendar.getInstance().getTime().toString())));
 
 
-            for (Delivery delivery: deliveries){
+            for (Delivery delivery : deliveries) {
                 serializer.text("\n");
                 serializer.text("\t");
 

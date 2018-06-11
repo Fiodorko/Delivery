@@ -2,17 +2,18 @@ package com.example.fiodorko.delivery.Graph_package;
 
 import org.osmdroid.util.GeoPoint;
 
+/**
+ * Predstavuje vrchol grafu
+ */
 public class Vertex {
-    public Vertex(int id, int set, int index, GeoPoint location)
-    {
+    Vertex(int id, int set, int index, GeoPoint location) {
         this.location = location;
         this.index = index;
         this.id = id;
         this.set = set;
     }
 
-    public Vertex(Vertex v)
-    {
+    Vertex(Vertex v) {
         this.location = v.location;
         this.index = v.index;
         this.id = v.id;

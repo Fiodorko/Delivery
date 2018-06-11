@@ -15,8 +15,9 @@ import org.osmdroid.views.overlay.Polyline;
 
 import java.util.ArrayList;
 
-import examples.Main;
-
+/**
+ * Trieda predstavuje informácie o objednávke
+ */
 public class Delivery implements Parcelable {
     private ArrayList<Item> content;
     private String recipient, address, date, phone;
@@ -49,7 +50,7 @@ public class Delivery implements Parcelable {
     }
 
 
-    public Delivery(Delivery d , Context ctx, MapView map) {
+    public Delivery(Delivery d, Context ctx, MapView map) {
         this.content = d.content;
         this.recipient = d.recipient;
         this.address = d.address;
@@ -71,7 +72,7 @@ public class Delivery implements Parcelable {
         this.road = new ArrayList<>();
     }
 
-    public Delivery(GeoPoint start, Context ctx, Road road, int color) {
+    public Delivery(GeoPoint start, Road road, int color) {
         this.content = null;
         this.recipient = null;
         this.address = null;
@@ -146,7 +147,6 @@ public class Delivery implements Parcelable {
     }
 
 
-
     public Marker getMarker() {
         return marker;
     }
@@ -156,10 +156,6 @@ public class Delivery implements Parcelable {
         this.marker.setPosition(location);
         this.marker.setIcon(image.getDrawable());
         this.image.setColorFilter(getColor(), PorterDuff.Mode.MULTIPLY);
-    }
-
-    public void setMarker(int color) {
-        this.image.setColorFilter(color, PorterDuff.Mode.MULTIPLY);
     }
 
     public String getRecipient() {
@@ -206,10 +202,6 @@ public class Delivery implements Parcelable {
         return location;
     }
 
-    public void setLocation(GeoPoint location) {
-        this.location = location;
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -232,7 +224,9 @@ public class Delivery implements Parcelable {
 
     }
 
-    public Polyline getPath() { return path; }
+    public Polyline getPath() {
+        return path;
+    }
 
     public void setPath(Polyline path) {
         this.path = path;
@@ -255,7 +249,7 @@ public class Delivery implements Parcelable {
     }
 
     public Road getRoad() {
-        if(road.isEmpty()) return null;
+        if (road.isEmpty()) return null;
         return road.get(0);
     }
 

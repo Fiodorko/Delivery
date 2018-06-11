@@ -1,5 +1,6 @@
 package com.example.fiodorko.delivery;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,7 +15,11 @@ import com.github.gcacace.signaturepad.views.SignaturePad;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
+/**
+ * Aktivita na zadávanie podpisu zákazníkom
+ */
 public class SignatureActivity extends Activity {
 
 
@@ -36,7 +41,6 @@ public class SignatureActivity extends Activity {
 
             @Override
             public void onStartSigning() {
-                //Event triggered when the pad is touched
             }
 
             @Override
@@ -54,17 +58,15 @@ public class SignatureActivity extends Activity {
 
     }
 
-    public void confirm(View v)
-    {
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT , Uri.parse("/sdcard/Download/deliveries"));
+    public void confirm(View v) {
+        @SuppressLint("SdCardPath") Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
         intent.putExtra(Intent.EXTRA_TITLE, "DeliveryID:" + getIntent().getIntExtra("id", 0));
         intent.setType("image/jpeg");
 
         startActivityForResult(intent, SAVE_REQUEST);
     }
 
-    public void reset(View v)
-    {
+    public void reset(View v) {
         mSignaturePad.clear();
     }
 
@@ -74,16 +76,16 @@ public class SignatureActivity extends Activity {
         if (requestCode == SAVE_REQUEST) {
 
             if (resultCode == RESULT_OK) {
-                Uri uri = null;
                 if (data != null) {
                     try {
                         Bitmap bitmap = mSignaturePad.getSignatureBitmap();
-                        OutputStream stream = getContentResolver().openOutputStream(data.getData());
+                        OutputStream stream = getContentResolver().openOutputStream(Objects.requireNonNull(data.getData()));
                         Bitmap newBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
                         Canvas canvas = new Canvas(newBitmap);
                         canvas.drawColor(Color.BLACK);
                         canvas.drawBitmap(bitmap, 0, 0, null);
                         newBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                        assert stream != null;
                         stream.close();
 
                     } catch (IOException e) {
@@ -95,9 +97,6 @@ public class SignatureActivity extends Activity {
             }
         }
     }
-
-
-
 
 
 }

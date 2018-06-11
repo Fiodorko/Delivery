@@ -16,6 +16,8 @@
     <string name="totalDuration">Celkový čas: </string>
     <string name="totalDistance">Celková vzdialenosť: </string>
     <string name="units">Km</string>
+    <string name="itemsHeader">Položky:</string>
+    <string name="deliveryCount">Počet Objednávok:</string>
     <string-array name="algorithms">
         <item>Greedy</item>
         <item>Double Spanning Tree</item>
@@ -26,8 +28,6 @@
     <string-array name="menu">
         <item>Menu</item>
         <item>Export</item>
-        <item>Zmeniť mapu</item>
-        <item>Uložiť zoznam</item>
         <item>Reset</item>
     </string-array>
 

@@ -145,7 +145,7 @@ class OSRMRoadManager extends RoadManager {
             urlString.append(geoPointAsLonLatString(p));
         }
         urlString.append("?alternatives="+(getAlternate?"true" : "false"));
-        urlString.append("&overview=full&steps=true");
+        urlString.append("&steps=true");
         urlString.append(mOptions);
         return urlString.toString();
     }

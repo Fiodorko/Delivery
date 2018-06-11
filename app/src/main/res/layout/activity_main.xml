@@ -42,7 +42,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:spinnerMode="dropdown"/>
+            android:spinnerMode="dropdown"
+            android:textSize="@dimen/textSize_small"/>
 
         <Button
             android:id="@+id/fileButton"
@@ -50,7 +51,8 @@
             android:layout_weight="1"
             android:layout_height="match_parent"
             android:onClick="chooseFile"
-            android:text="@string/button_choose_file" />
+            android:text="@string/button_choose_file"
+            android:textSize="@dimen/textSize_small"/>
 
         <Button
             android:visibility="invisible"
@@ -59,7 +61,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:onClick="draw"
-            android:text="@string/button_path" />
+            android:text="@string/button_path"
+            android:textSize="@dimen/textSize_small"/>
 
         <Spinner
             android:visibility="invisible"
@@ -68,7 +71,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
 
-            android:spinnerMode="dropdown"/>
+            android:spinnerMode="dropdown"
+            android:textSize="@dimen/textSize_small"/>
 
         <LinearLayout
             android:id="@+id/route_info"
@@ -76,20 +80,21 @@
             android:layout_height="match_parent"
             android:layout_weight="2"
             android:visibility="invisible"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:textSize="@dimen/textSize_small">
 
             <TextView
                 android:id="@+id/selectedAlgorithm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
-                android:layout_gravity="start" />
+                android:layout_gravity="start"
+                android:textSize="@dimen/textSize_small"/>
 
             <TextView
                 android:id="@+id/total_duration"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
+                android:textSize="@dimen/textSize_small"
                 android:layout_gravity="start"/>
 
             <TextView

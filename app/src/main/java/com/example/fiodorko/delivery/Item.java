@@ -3,16 +3,19 @@ package com.example.fiodorko.delivery;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class Item implements Parcelable{
+/**
+ * Predstavuje položku objednávky
+ */
+public class Item implements Parcelable {
     private String id;
     private boolean completed;
 
-    public Item(String id, boolean completed) {
+    Item(String id, boolean completed) {
         this.id = id;
         this.completed = completed;
     }
 
-    protected Item(Parcel in) {
+    private Item(Parcel in) {
         id = in.readString();
         completed = in.readByte() != 0;
     }

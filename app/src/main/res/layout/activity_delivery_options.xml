@@ -10,7 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="@dimen/border_top"
         android:layout_weight="40"
         android:orientation="horizontal">
 
@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
-            android:layout_marginStart="50dp"
+            android:layout_marginStart="@dimen/border"
             android:orientation="vertical">
 
             <ImageView
@@ -27,6 +27,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:scaleType="fitXY"
                 />
 
             <ImageButton
@@ -35,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="50dp"
+                android:layout_marginTop="@dimen/border"
                 android:onClick="scan"
                 android:src="@drawable/ic_qr_code_scan" />
 
@@ -45,8 +46,9 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="50dp"
-            android:layout_marginStart="25dp"
+
+            android:layout_marginEnd="@dimen/border"
+            android:layout_marginStart="@dimen/border"
             android:orientation="vertical">
 
             <TextView
@@ -54,45 +56,40 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:text="@string/random"
 
-                android:textSize="25sp" />
+                android:textSize="@dimen/textSize_medium"/>
 
             <TextView
                 android:id="@+id/address"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:text="@string/random"
 
-                android:textSize="25sp" />
+                android:textSize="@dimen/textSize_medium" />
 
             <TextView
                 android:id="@+id/phone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:text="@string/random"
 
-                android:textSize="25sp" />
+                android:textSize="@dimen/textSize_medium" />
 
             <TextView
                 android:id="@+id/date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:text="@string/random"
 
-                android:textSize="25sp" />
+                android:textSize="@dimen/textSize_medium" />
 
             <TextView
                 android:id="@+id/status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:text="@string/random"
 
-                android:textSize="25sp" />
+                android:textSize="@dimen/textSize_medium" />
 
 
         </LinearLayout>

@@ -14,9 +14,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * Preberá maticu ohodnotení hrán z OSRM_API
+ */
 public class OSRM_API extends AsyncTask<String, Void, String> {
 
-    ResponseListener listener;
+    private ResponseListener listener;
+
     public void setOnResponseListener(ResponseListener listener) {
         this.listener = listener;
     }
@@ -32,26 +36,24 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
         }
     }
 
+    /**
+     * Spracuje odpoveď OSRM API a z JSON objektu vztvorí dvojrozmerné pole typu double
+     *
+     * @param result odpoveď OSRM api v tvare JSON objektu
+     */
     protected void onPostExecute(String result) {
-
-        if(result.equals("Nie je možné stiahnuť informácie z webu!")) {
+        if (result.equals("Nie je možné stiahnuť informácie z webu!")) {
+            Log.d("OSRM", "Nie je možné stiahnuť informácie z webu!");
             listener.onResponseReceive(new double[0][0]);
             return;
         }
-
-        Log.d("JSON", "Parsujem data");
-        Log.d("JSON", result);
-        double[][] matrix = null;
-
+        double[][] matrix;
         try {
             JSONObject jsonResponse = new JSONObject(result);
             JSONArray array = jsonResponse.getJSONArray("durations");
-            Log.d("JSON" , array.toString());
             matrix = new double[array.length()][array.length()];
-            for (int i = 0; i < array.length(); i++)
-            {
-                for (int j = 0; j < array.length(); j++)
-                {
+            for (int i = 0; i < array.length(); i++) {
+                for (int j = 0; j < array.length(); j++) {
                     matrix[i][j] = array.getJSONArray(i).getDouble(j);
                 }
             }
@@ -59,27 +61,22 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
             throw new RuntimeException(e);
 
         }
-
         listener.onResponseReceive(matrix);
-
     }
 
     private String downloadUrl(String points) throws IOException {
         InputStream is = null;
 
-        if(points.equals("Nie je možné stiahnuť informácie z webu! Chybná URL")) return points;
+        if (points.equals("Nie je možné stiahnuť informácie z webu!")) return points;
 
         try {
-            URL url = new URL("http://router.project-osrm.org/table/v1/driving/" + points);
+            URL url = new URL("http://185.33.146.213:5000/table/v1/driving/" + points);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(10000 /* milliseconds */);
             conn.setConnectTimeout(15000 /* milliseconds */);
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
-
             conn.connect();
-            int response = conn.getResponseCode();
-            Log.d("JSON", "Odpoved OSRM je" + response);
 
             is = conn.getInputStream();
 
@@ -96,10 +93,10 @@ public class OSRM_API extends AsyncTask<String, Void, String> {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
 
-        String line = null;
+        String line;
         try {
             while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
+                sb.append(line).append("\n");
             }
         } catch (IOException e) {
             e.printStackTrace();

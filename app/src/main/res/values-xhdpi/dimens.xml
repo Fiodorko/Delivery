@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="textSize">25sp</dimen>
+    <dimen name="textSize_small">13sp</dimen>
+    <dimen name="textSize_medium">20sp</dimen>
+    <dimen name="border_top">60dp</dimen>
+    <dimen name="border">30dp</dimen>
+    <dimen name="normal">72dp</dimen>
+    <dimen name="icon">24dp</dimen>
+    <dimen name="big">200dp</dimen>
+</resources>

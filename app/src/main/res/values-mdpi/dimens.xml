@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="textSize">15sp</dimen>
+    <dimen name="textSize_small">15sp</dimen>
+    <dimen name="border">15dp</dimen>
+    <dimen name="normal">54dp</dimen>
+    <dimen name="icon">18dp</dimen>
+    <dimen name="big">150dp</dimen>
+</resources>

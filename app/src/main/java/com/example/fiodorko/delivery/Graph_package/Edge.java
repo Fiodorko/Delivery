@@ -1,28 +1,23 @@
 package com.example.fiodorko.delivery.Graph_package;
 
+/**
+ * Predstavuje Hranu grafu
+ */
 public class Edge {
-    public Edge(Vertex a, Vertex b, double weight)
-    {
+    Edge(Vertex a, Vertex b, double weight) {
         this.a = a;
         this.b = b;
         this.weight = weight;
     }
 
-    public Edge(Edge e)
-    {
+    Edge(Edge e) {
         this.a = new Vertex(e.a);
         this.b = new Vertex(e.b);
         this.weight = e.weight;
     }
 
-    public boolean contains(Vertex v)
-    {
+    public boolean contains(Vertex v) {
         return v == a || v == b;
-    }
-
-    public boolean contains(int id)
-    {
-        return id == a.id || id == b.id;
     }
 
     public Vertex a;
@@ -32,8 +27,7 @@ public class Edge {
     public boolean ab = false;
     public boolean ba = false;
 
-    public String String()
-    {
-        return a.index+"<->"+b.index + "("+weight+")";
+    public String String() {
+        return a.index + "<->" + b.index + "(" + weight + ")";
     }
 }

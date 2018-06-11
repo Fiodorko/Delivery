@@ -4,17 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.support.v7.view.menu.MenuAdapter;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -25,10 +22,8 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -38,16 +33,11 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Objects;
 
 public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener {
@@ -55,10 +45,13 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     private final int CHOOSE_FILE = 1;
     private final int OPTIONS_REQUEST = 2;
     private final int EXPORT_REQUEST = 42;
+
+    /**
+     * Objekt pathfinder má na starosť vytvorenie grafovej podoby objednávok a preberá z OSRM informácie o cestách medzi jednotlivými ojednávkami
+     */
     private PathFinder pathFinder = null;
     private static final String TAG = "MainLog";
     private Uri uri;
-    private boolean fileLoaded = false;
 
 
     TextView totalDuration;
@@ -66,8 +59,10 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     TextView selectedAlgorithm;
     Intent intent;
     Context ctx;
-    Toolbar toolbar;
 
+    /**
+     * Predstavuje objekt mapy. Je to trieda z knižnice osmdorid
+     */
     MapView map = null;
     ListView listView;
     Spinner algorithmSelect;
@@ -78,15 +73,23 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     Button pathButton;
     Marker storageMarker;
 
-
-
-
+    /**
+     * Začiatočný bod kuriéra
+     */
     GeoPoint start = new GeoPoint(49.2093471600, 18.7578305800);
 
-
+    /**
+     * Zoznam načítaných objednávok
+     */
     ArrayList<Delivery> deliveries = new ArrayList<>();
+    /**
+     * Zoznam dokončených objednávok
+     */
     ArrayList<Delivery> finishedDeliveries = new ArrayList<>();
-    ArrayList<Delivery> orderedDelivieries = new ArrayList<>();
+    /**
+     * Zoznam objednávok utriedených poľa algoritmu
+     */
+    ArrayList<Delivery> orderedDeliveries = new ArrayList<>();
 
     Thread createPathFinder = new Thread(new Runnable() {
         public void run() {
@@ -99,17 +102,18 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 myHandler.sendMessage(msg);
                 Log.d(TAG, "Pathfinder already existed!");
             }
-
         }
     });
 
     Thread getBestPath = new Thread(new Runnable() {
         public void run() {
             Log.d(TAG, "Obtaining best path...");
-            orderedDelivieries = pathFinder.bestPath(algorithm);
-            Log.d(TAG, "Best path aquired!");
-            Message msg = myHandler.obtainMessage(10);
-            myHandler.sendMessage(msg);
+            orderedDeliveries = pathFinder.bestPath(algorithm);
+            if (orderedDeliveries != null) {
+                Log.d(TAG, "Best path aquired!");
+                Message msg = myHandler.obtainMessage(10);
+                myHandler.sendMessage(msg);
+            }
         }
     });
 
@@ -122,17 +126,13 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             } catch (IOException | XmlPullParserException e) {
                 e.printStackTrace();
                 Log.d(TAG, "Parsing Failed");
-                Toast.makeText(ctx, "Pri parsovaní došlo k chybe", Toast.LENGTH_SHORT).show();
+                Message msg = myHandler.obtainMessage(50);
+                myHandler.sendMessage(msg);
             }
-            if(!deliveries.isEmpty()){
+            if (!deliveries.isEmpty()) {
                 Message msg = myHandler.obtainMessage(20);
                 myHandler.sendMessage(msg);
             }
-            else
-                {
-                    Toast.makeText(getApplicationContext(), "Súbor sa nepodarilo načítať skúste to znova", Toast.LENGTH_SHORT).show();
-                }
-
         }
     });
 
@@ -142,21 +142,32 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            int PATHFINDER_CREATED = 10;
-            if (msg.what == PATHFINDER_CREATED) {
-                drawPath();
-            }
-            if (msg.what == 5) {
-                getBestPath.start();
-            }
-            if (msg.what == 15) {
-                parseFile.start();
-            }
-            if (msg.what == 20) {
-                hideFileSelect();
-            }
-            if (msg.what == 25) {
-                Toast.makeText(getApplicationContext(), "Príliš veľa požiadaviek skúste to neskôr", Toast.LENGTH_SHORT).show();
+
+            switch (msg.what) {
+                case 5:
+                    getBestPath.start();
+                    break;
+                case 10:
+                    drawPath();
+                    break;
+                case 15:
+                    parseFile.start();
+                    break;
+                case 20:
+                    hideFileSelect();
+                    break;
+                case 25:
+                    Toast.makeText(getApplicationContext(), "Príliš veľa požiadaviek skúste to neskôr", Toast.LENGTH_SHORT).show();
+                    pathFinder = null;
+                    showPathFinder();
+                    break;
+                case 50:
+                    Toast.makeText(getApplicationContext(), "Súbor sa nepodarilo načítať skúste to znova", Toast.LENGTH_SHORT).show();
+                    break;
+                case 429:
+                    Toast.makeText(getApplicationContext(), "Pri získavaní cesty sa vyskytla chyba!", Toast.LENGTH_SHORT).show();
+                    showPathFinder();
+                    break;
             }
         }
     };
@@ -169,14 +180,23 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
+        View decorView = getWindow().getDecorView();
+
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptions);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        boolean fileLoaded = false;
         if (savedInstanceState != null) {
             if (fileLoaded) {
                 deliveries = savedInstanceState.getParcelableArrayList("deliveries");
             }
         }
+
+        totalDuration = findViewById(R.id.total_duration);
+        totalDistance = findViewById(R.id.total_distance);
 
         listView = findViewById(R.id.deliveryListView);
         listView.setOnItemClickListener(this);
@@ -215,36 +235,11 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         }
     }
 
-    private void drawPath() {
-        clearMap();
-        findViewById(R.id.map).setAlpha((float) 1);
-        findViewById(R.id.mapProgress).setVisibility(View.INVISIBLE);
 
-        listView.setAdapter(new DeliveryListAdapter(this, orderedDelivieries));
-
-        Log.d("PathFinder", orderedDelivieries.size() + " zasielok");
-
-        for (Delivery delivery : orderedDelivieries) {
-            Polyline tmp = RoadManager.buildRoadOverlay(delivery.getRoad(),
-                    delivery.getColor(),
-                    7.5f);
-
-            delivery.setPath(tmp);
-            map.getOverlays().add(tmp);
-            if(delivery.getId() != -1)map.getOverlays().add(delivery.getMarker());
-            map.invalidate();
-        }
-
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.ic_storage_icon);
-        icon.setColorFilter(
-                deliveries.get(deliveries.size()-1).getColor(), PorterDuff.Mode.MULTIPLY);
-        storageMarker.setIcon(icon.getDrawable());
-        map.getOverlays().add(storageMarker);
-        hidePathFinder();
-    }
-
-    public void initializeMap() {
+    /**
+     * Metóda inicializuje mapu, nastaví typ mapy, zoomovacie nastavenia a vycentruje mapu na začiatočný bod ktorému tiež nastaví ikonu skladu.
+     */
+    private void initializeMap() {
         map = findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setBuiltInZoomControls(false);
@@ -265,7 +260,45 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         map.invalidate();
     }
 
-    public void parseXML(InputStream file) throws IOException, XmlPullParserException {
+    /**
+     * Vykreslí cesty všetkých objednávok na mapu
+     */
+    private void drawPath() {
+        clearMap();
+        findViewById(R.id.map).setAlpha((float) 1);
+        findViewById(R.id.mapProgress).setVisibility(View.INVISIBLE);
+
+        listView.setAdapter(new DeliveryListAdapter(this, orderedDeliveries));
+
+        for (Delivery delivery : orderedDeliveries) {
+            Polyline tmp = RoadManager.buildRoadOverlay(delivery.getRoad(),
+                    delivery.getColor(),
+                    7.5f);
+
+            delivery.setPath(tmp);
+            map.getOverlays().add(tmp);
+            if (delivery.getId() != -1) map.getOverlays().add(delivery.getMarker());
+            map.invalidate();
+        }
+
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.drawable.ic_storage_icon);
+        icon.setColorFilter(
+                deliveries.get(deliveries.size() - 1).getColor(), PorterDuff.Mode.MULTIPLY);
+        storageMarker.setIcon(icon.getDrawable());
+        map.getOverlays().add(storageMarker);
+        hidePathFinder();
+
+    }
+
+    /**
+     * Načíta a spracuje súbor file s objednávkami
+     *
+     * @param file - objekt predstavujúci vzbraný súbor
+     * @throws IOException            - výnimka pri čítaní súboru
+     * @throws XmlPullParserException - výnimka pri parsovaní súboru
+     */
+    private void parseXML(InputStream file) throws IOException, XmlPullParserException {
         XMLParser parser = new XMLParser(file, this);
         deliveries = parser.parseXML();
 
@@ -274,56 +307,18 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             point.setMarker(marker);
             map.getOverlays().add(point.getMarker());
         }
-    }
 
-    private void hideFileSelect() {
-        listView.setAdapter(new DeliveryListAdapter(this, deliveries));
-
-        fileButton.setVisibility(View.GONE);
-        showPathFinder();
-    }
-
-    private void hidePathFinder() {
-
-        pathButton.setVisibility(View.GONE);
-        algorithmSelect.setVisibility(View.GONE);
-
-        findViewById(R.id.route_info).setVisibility(View.VISIBLE);
-        totalDuration = findViewById(R.id.total_duration);
-        totalDistance = findViewById(R.id.total_distance);
-        selectedAlgorithm = findViewById(R.id.selectedAlgorithm);
-        selectedAlgorithm.setText(algorithm + " Počet zasielok: " + deliveries.size());
-        refreshRouteInfo();
-    }
-
-    private void hideRouteInfo() {
-        findViewById(R.id.route_info).setVisibility(View.GONE);
-        showPathFinder();
-    }
-
-    private void showPathFinder()
-    {
-        pathButton.setVisibility(View.VISIBLE);
-        algorithmSelect.setVisibility(View.VISIBLE);
-
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                MainActivity.this, R.array.algorithms, android.R.layout.simple_spinner_item);
-
-        adapter.setDropDownViewResource(R.layout.dropdown_item);
-
-        algorithmSelect.setAdapter(adapter);
-    }
-
-    private void showFileSelect()
-    {
-        pathButton.setVisibility(View.VISIBLE);
-        algorithmSelect.setVisibility(View.VISIBLE);
     }
 
 
+    /**
+     * Vymaže objednávku zo zoznamu aktuálnych objednávok a zmaže jej ikonu a cestu z mapy.
+     *
+     * @param id - identifikátor objednávky
+     */
     public void removeDelivery(int id) {
         Delivery removed = null;
-        for (Delivery delivery : orderedDelivieries) {
+        for (Delivery delivery : orderedDeliveries) {
             if (delivery.getId() == id) {
                 map.getOverlays().remove(delivery.getMarker());
                 map.getOverlays().remove(delivery.getPath());
@@ -331,19 +326,49 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             }
         }
 
-
-        assert removed != null;
-        if (pathFinder != null) {
+        if (pathFinder != null || removed != null) {
+            assert removed != null;
             pathFinder.setStart(removed.getLocation());
             pathFinder.getGraph().removeVertex(removed.getId());
         }
 
-        orderedDelivieries.remove(removed);
+        orderedDeliveries.remove(removed);
         finishedDeliveries.add(removed);
 
-        listView.setAdapter(new DeliveryListAdapter(this, orderedDelivieries));
+        listView.setAdapter(new DeliveryListAdapter(this, orderedDeliveries));
         map.invalidate();
         refreshRouteInfo();
+    }
+
+    /**
+     * Zavolá aktivitu na vybranie súboru s objednávkami
+     *
+     * @param v tlačidlo ktoré spúšťa metódu
+     */
+    public void chooseFile(View v) {
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert connMgr != null;
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        if (networkInfo != null && networkInfo.isConnected()) {
+            @SuppressLint("SdCardPath") Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
+            intent.setType("text/xml");
+            startActivityForResult(intent, CHOOSE_FILE);
+        } else {
+            Toast.makeText(getApplicationContext(), "Skontrolujte Internetové pripojenie", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * spustí vlákno ktoré vztvorí triedu PathFinder.
+     *
+     * @param v tlačidlo ktoré spúšťa metódu
+     */
+    public void draw(View v) {
+        createPathFinder.start();
+        findViewById(R.id.pathButton).setClickable(false);
+        findViewById(R.id.map).setAlpha((float) 0.5);
+        findViewById(R.id.mapProgress).setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -356,7 +381,6 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                         Message msg = myHandler.obtainMessage(15);
                         myHandler.sendMessage(msg);
                     }
-
 
                 }
                 break;
@@ -414,10 +438,6 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                             e.printStackTrace();
                         }
                     }
-                } else if (resultCode == RESULT_CANCELED) {
-                    if (data != null) {
-
-                    }
                 }
                 break;
 
@@ -439,12 +459,12 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             IMapController mapController = map.getController();
             mapController.setCenter(adapt.getItem(position).getLocation());
 
-                if (map.getOverlays().indexOf(adapt.getItem(position).getPath()) != -1) {
-                    map.getOverlays().remove(adapt.getItem(position).getPath());
-                    map.getOverlays().add(adapt.getItem(position).getPath());
-                }
+            if (map.getOverlays().indexOf(adapt.getItem(position).getPath()) != -1) {
+                map.getOverlays().remove(adapt.getItem(position).getPath());
+                map.getOverlays().add(adapt.getItem(position).getPath());
+            }
 
-            if(adapt.getItem(position).getId() != -1 ) {
+            if (adapt.getItem(position).getId() != -1) {
                 map.getOverlays().remove(adapt.getItem(position).getMarker());
                 map.getOverlays().add(adapt.getItem(position).getMarker());
             }
@@ -464,14 +484,23 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         switch (selected) {
             case "Export":
-                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
-                intent.putExtra(Intent.EXTRA_TITLE, "Report" + Calendar.getInstance().getTime());
-                intent.setType("text/xml");
-                startActivityForResult(intent, EXPORT_REQUEST);
+                if (!finishedDeliveries.isEmpty()) {
+                    @SuppressLint("SdCardPath") Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
+                    intent.putExtra(Intent.EXTRA_TITLE, "Report" + Calendar.getInstance().getTime());
+                    intent.setType("text/xml");
+                    startActivityForResult(intent, EXPORT_REQUEST);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Nie je čo exportovať", Toast.LENGTH_SHORT).show();
+
+                }
                 break;
             case "Reset":
-                reset();
-                parent.setSelection(0);
+                if (!orderedDeliveries.isEmpty()) {
+                    reset();
+                    parent.setSelection(0);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Zatiaľ ste nevykonali žiadne zmeny", Toast.LENGTH_SHORT).show();
+                }
                 break;
             default:
                 break;
@@ -485,70 +514,28 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         algorithm = getResources().getResourceName(R.string.algorithm);
     }
 
-    public void chooseFile(View v) {
-        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        assert connMgr != null;
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
-        if (networkInfo != null && networkInfo.isConnected()) {
-            @SuppressLint("SdCardPath") Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, Uri.parse("/sdcard/Download/deliveries"));
-            intent.setType("text/xml");
-            startActivityForResult(intent, CHOOSE_FILE);
-        } else {
-            Toast.makeText(getApplicationContext(), "Skontrolujte Internetové pripojenie", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void draw(View v) {
-        createPathFinder.start();
-        findViewById(R.id.map).setAlpha((float) 0.5);
-        findViewById(R.id.mapProgress).setVisibility(View.VISIBLE);
-    }
-
-
-    public void onStart() {
-        super.onStart();
-        Log.d(TAG, "In the onStart() event");
-    }
-
-    public void onRestart() {
-        super.onRestart();
-        Log.d(TAG, "In the onRestart() event");
-    }
-
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "In the onResume() event");
-    }
-
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "In the onPause() event");
-    }
-
-    public void onStop() {
-        super.onStop();
-        Log.d(TAG, "In the onStop() event");
-    }
-
-    public void onDestroy() {
-        super.onDestroy();
-
-
-        Log.d(TAG, "In the onDestroy() event");
-    }
-
+    /**
+     * Vráti celkovú dobu za ktorú je možné cestu absolvovať
+     *
+     * @return celková doba
+     */
     private double getDuration() {
         double result = 0;
-        for (Delivery delivery : orderedDelivieries) {
+        for (Delivery delivery : orderedDeliveries) {
             result += delivery.getRoad().mDuration;
         }
         return result;
     }
 
+    /**
+     * Vráti celkovú dĺžku cesty
+     *
+     * @return celková dĺžka
+     */
     private double getDistance() {
         double result = 0;
-        for (Delivery delivery : orderedDelivieries) {
+        for (Delivery delivery : orderedDeliveries) {
             result += delivery.getRoad().mLength;
         }
         return result;
@@ -557,10 +544,10 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     @SuppressLint({"SetTextI18n", "DefaultLocale"})
     private void refreshRouteInfo() {
         double time = getDuration();
-        int hours = (int)time/3600;
-        time -= hours*3600;
-        int minutes = (int)time/60;
-        time -= minutes*60;
+        int hours = (int) time / 3600;
+        time -= hours * 3600;
+        int minutes = (int) time / 60;
+        time -= minutes * 60;
 
         totalDuration.setText(
                 getString(R.string.totalDuration) + " "
@@ -579,6 +566,9 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         return copy;
     }
 
+    /**
+     * Zruší aktuálne nájdenú cestu a vráti aplikáciu do stavu kedy si môže užívateľ zvoliť algoritmus na nájdenie najlepšej cesty
+     */
     public void reset() {
         hideRouteInfo();
         clearMap();
@@ -587,15 +577,18 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             point.setMarker(marker);
             map.getOverlays().add(point.getMarker());
         }
+        orderedDeliveries = new ArrayList<>();
+        finishedDeliveries = new ArrayList<>();
         map.invalidate();
         listView.setAdapter(new DeliveryListAdapter(this, deliveries));
     }
 
 
-    public void clearMap()
-    {
-        while(!map.getOverlays().isEmpty())
-        {
+    /**
+     * Vymaže z mapy všetky overlaye a pridá iba ikonu skladu na začiatočný bod
+     */
+    public void clearMap() {
+        while (!map.getOverlays().isEmpty()) {
             map.getOverlays().remove(0);
         }
 
@@ -609,4 +602,46 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         map.invalidate();
 
     }
+
+    private void hideFileSelect() {
+        listView.setAdapter(new DeliveryListAdapter(this, deliveries));
+        fileButton.setVisibility(View.GONE);
+        map.invalidate();
+        showPathFinder();
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void hidePathFinder() {
+
+        pathButton.setVisibility(View.GONE);
+        algorithmSelect.setVisibility(View.GONE);
+
+        findViewById(R.id.route_info).setVisibility(View.VISIBLE);
+
+        selectedAlgorithm = findViewById(R.id.selectedAlgorithm);
+        selectedAlgorithm.setText(algorithm + getString(R.string.deliveryCount) + deliveries.size());
+        refreshRouteInfo();
+    }
+
+    private void hideRouteInfo() {
+        findViewById(R.id.route_info).setVisibility(View.GONE);
+        showPathFinder();
+    }
+
+    private void showPathFinder() {
+        findViewById(R.id.map).setAlpha((float) 1);
+        findViewById(R.id.mapProgress).setVisibility(View.INVISIBLE);
+        pathButton.setVisibility(View.VISIBLE);
+        findViewById(R.id.pathButton).setClickable(true);
+        algorithmSelect.setVisibility(View.VISIBLE);
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                MainActivity.this, R.array.algorithms, android.R.layout.simple_spinner_item);
+
+        adapter.setDropDownViewResource(R.layout.dropdown_item);
+
+        algorithmSelect.setAdapter(adapter);
+    }
+
+
 }

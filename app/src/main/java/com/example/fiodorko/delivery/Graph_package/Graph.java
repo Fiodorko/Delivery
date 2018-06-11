@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Predstavuje grafovú podobu adries objednávok, obsahuje cesty medzi všetkými adresami
+ */
 public class Graph {
 
-    private LinkedList<Edge> minimalSpanningTree;
     private ArrayList<Delivery> deliveries;
     private OSRM_API api = new OSRM_API();
     private double distanceMatrix[][];
@@ -22,16 +24,23 @@ public class Graph {
     private ArrayList<Vertex> vertices;
     private LinkedList<Edge> edges;
 
+    private LinkedList<Edge> spannningTree = new LinkedList<>();
 
-    public Graph(ArrayList<Delivery> deliveries, GeoPoint start, Handler myHandler)
-    {
+
+    /**
+     * Prevezme zoznam zásielok a vytvorí podľa ich adries vrcholy grafu
+     *
+     * @param deliveries - zoznam zásielok
+     * @param start      - začiatočný vrchol
+     * @param myHandler  - handler eventov (Ak server vráti neplatnú odpoveď, informuje hlavnú triedu)
+     */
+    public Graph(ArrayList<Delivery> deliveries, GeoPoint start, Handler myHandler) {
         this.deliveries = deliveries;
         this.vertices = new ArrayList<>();
         this.vertices.add(new Vertex(0, 0, 0, start));
         this.myHandler = myHandler;
         this.vertices = new ArrayList<>();
         this.edges = new LinkedList<>();
-        this.minimalSpanningTree = null;
         int i = 1;
 
         vertices.add(new Vertex(0, 0, 0, start));
@@ -42,24 +51,9 @@ public class Graph {
         buildDistanceMatrix();
     }
 
-    public ArrayList<Vertex> cloneVertices(ArrayList<Vertex> vertices)
-    {
-        ArrayList<Vertex> copy = new ArrayList<>();
-        for (Vertex vertex: vertices) {
-            copy.add(new Vertex(vertex));
-        }
-        return copy;
-    }
-
-    public LinkedList<Edge> cloneEdges(LinkedList<Edge> edges)
-    {
-        LinkedList<Edge> copy = new LinkedList<>();
-        for (Edge edge: edges) {
-            copy.add(new Edge(edge));
-        }
-        return copy;
-    }
-
+    /**
+     * Zostrojí reťazec geolokačných údajov ktoré pošle triede OSRM API aby ich v odoslala webovému API v správnej forme
+     */
     private void buildDistanceMatrix() {
 
         String points = "";
@@ -74,60 +68,59 @@ public class Graph {
         points = points.substring(0, points.length() - 2);
 
         try {
+
+            api.setOnResponseListener(new ResponseListener() {
+                @Override
+                public void onResponseReceive(double[][] data) {
+                    if (data.length == 0) {
+                        Log.d("JSON", "Matica je prazdna");
+                        Message msg = myHandler.obtainMessage(25);
+                        myHandler.sendMessage(msg);
+                    } else {
+                        distanceMatrix = data;
+
+                        for (int i = 0; i < data.length; i++) {
+
+                            for (int j = 0; j < data.length; j++) {
+                                Log.d(TAG, i + "<->" + j + ": " + data[i][j]);
+                            }
+                        }
+
+
+                        buildEdges();
+                        Log.d(TAG, "Graf je pripraveny");
+                        Message msg = myHandler.obtainMessage(5);
+                        myHandler.sendMessage(msg);
+                    }
+                }
+            });
             api.execute(points).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
-        api.setOnResponseListener(new ResponseListener() {
-            @Override
-            public void onResponseReceive(double[][] data) {
-                if (data.length == 0) {
-                    Log.d("JSON", "Matica je prazdna");
-                    Message msg = myHandler.obtainMessage(25);
-                    myHandler.sendMessage(msg);
-                } else {
-                    distanceMatrix = data;
 
-                    for (int i = 0; i < data.length; i++) {
-
-                        for (int j = 0; j < data.length; j++) {
-                            Log.d(TAG, i+"<->"+j+": "+ data[i][j]);
-                        }
-                    }
-
-
-                    buildEdges();
-                    Log.d(TAG, "Graf je pripraveny");
-                    Message msg = myHandler.obtainMessage(5);
-                    myHandler.sendMessage(msg);
-                }
-            }
-        });
     }
 
     private void buildEdges() {
         for (int j = 0; j < vertices.size(); j++) {
-            for (int k = j+1; k < vertices.size(); k++) {
+            for (int k = j + 1; k < vertices.size(); k++) {
                 edges.add(new Edge(vertices.get(j), vertices.get(k), distanceMatrix[j][k]));
             }
         }
     }
 
-    public void removeVertex(int id)
-    {
+    public void removeVertex(int id) {
         Vertex removed = null;
 
-        for (Vertex vertex: vertices)
-        {
-            if(vertex.id == id)
-            {
+        for (Vertex vertex : vertices) {
+            if (vertex.id == id) {
                 removed = vertex;
             }
         }
 
         for (int i = 0; i < edges.size(); i++) {
-            if(edges.get(i).contains(removed)) {
+            if (edges.get(i).contains(removed)) {
                 edges.remove(i);
                 i--;
             }
@@ -147,38 +140,31 @@ public class Graph {
         return vertices;
     }
 
-    public void setDistanceMatrix(double[][] distanceMatrix) {
-        this.distanceMatrix = distanceMatrix;
-    }
-
-    public void setVertices(ArrayList<Vertex> vertices) {
-        this.vertices = vertices;
-
-    }
-
     public ArrayList<Delivery> getDeliveries() {
         return deliveries;
     }
 
 
-    public void setEdges(LinkedList<Edge> edges) {
-        this.edges = edges;
-    }
-
     public LinkedList<Edge> getEdges() {
         return edges;
     }
 
-    public Edge getEdge(Vertex a, Vertex b)
-    {
-        for (Edge edge: edges) {
-            if(edge.contains(a) && edge.contains(b)) return edge;
+    public Edge getEdge(Vertex a, Vertex b) {
+        for (Edge edge : edges) {
+            if (edge.contains(a) && edge.contains(b)) return edge;
         }
         return null;
     }
 
-    public Vertex getStart()
-    {
+    public Vertex getStart() {
         return vertices.get(0);
+    }
+
+    public void setSpannningTree(LinkedList<Edge> spannningTree) {
+        this.spannningTree = spannningTree;
+    }
+
+    public LinkedList<Edge> getSpannningTree() {
+        return spannningTree;
     }
 }

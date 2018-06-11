@@ -3,6 +3,7 @@ package com.example.fiodorko.delivery;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import com.example.fiodorko.delivery.Graph_package.Algorithms;
@@ -16,15 +17,16 @@ import org.osmdroid.views.overlay.Polyline;
 
 import java.util.ArrayList;
 
+/**
+ * Preberá informácie o cestách medzi jednotlivými zásielkami utriedenými algoritmom
+ */
 public class PathFinder {
 
 
     private GeoPoint start;
-    private String TAG = "PathFinder";
-    private static int TRANSPARENCY = 192;
     private Context ctx;
     private Graph graph;
-
+    private Handler handler;
 
 
     private final int[] colors = {
@@ -40,18 +42,22 @@ public class PathFinder {
         this.start = start;
         this.ctx = ctx;
         this.graph = new Graph(deliveries, start, myHandler);
+        handler = myHandler;
     }
 
-
+    /**
+     * Podľa zadaného algoritmu zavolá metódu triedy Algorithms ktorá utriedi objednávky a získa informácie o cestách medzi vzájomne nasledujúcimi objednávkami
+     *
+     * @param algorithm - meno zvoleného algoritmu
+     * @return - utriedený zoznam objednávok
+     */
     public ArrayList<Delivery> bestPath(String algorithm) {
 
         RoadManager roadManager = new OSRMRoadManager(ctx);
-        //roadManager.addRequestOption();
 
         ArrayList<Delivery> tmp_deliveries;
 
-        switch (algorithm)
-        {
+        switch (algorithm) {
             case "Double Spanning Tree":
                 tmp_deliveries = Algorithms.doubleSpanningTree(graph);
                 break;
@@ -69,6 +75,7 @@ public class PathFinder {
                 break;
         }
 
+        String TAG = "PathFinder";
         Log.d(TAG, tmp_deliveries.size() + " First: " + tmp_deliveries.get(0).getAddress());
         ArrayList<GeoPoint> pair = new ArrayList<>(2);
 
@@ -90,22 +97,30 @@ public class PathFinder {
 
 
             Road road = roadManager.getRoad(pair);
+            if (road.mStatus == Road.STATUS_INVALID || road.mStatus == Road.STATUS_TECHNICAL_ISSUE) {
+                Message msg = handler.obtainMessage(429);
+                handler.sendMessage(msg);
+                return null;
+            }
 
             roadOverlay = RoadManager.buildRoadOverlay(road);
             roadOverlay.setColor(colors[(i) % colors.length]);
             tmp_deliveries.get(i).setRoad(road);
             tmp_deliveries.get(i).setColor(colors[(i) % colors.length]);
-            //tmp_deliveries.get(i).setMarker(tmp_deliveries.get(i).getColor());
+            tmp_deliveries.get(i).setDistance(road.mLength);
+            tmp_deliveries.get(i).setDuration(road.mDuration);
+
         }
 
         pair.set(0, pair.get(1));
         pair.set(1, start);
-        tmp_deliveries.add(new Delivery(start, ctx, roadManager.getRoad(pair), colors[tmp_deliveries.size() % colors.length]));
+        tmp_deliveries.add(new Delivery(start, roadManager.getRoad(pair), colors[tmp_deliveries.size() % colors.length]));
 
         return tmp_deliveries;
     }
 
     private static int hex2Rgb(String colorStr) {
+        int TRANSPARENCY = 192;
         return Color.argb(
                 TRANSPARENCY,
                 Integer.valueOf(colorStr.substring(1, 3), 16),
@@ -115,10 +130,6 @@ public class PathFinder {
 
     public Graph getGraph() {
         return graph;
-    }
-
-    public void setGraph(Graph graph) {
-        this.graph = graph;
     }
 
     public GeoPoint getStart() {
